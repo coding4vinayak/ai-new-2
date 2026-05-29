@@ -33,17 +33,22 @@ class LocalExtractor(BaseExtractor):
     documents entirely on the local machine using NLP models and pattern matching.
     """
 
-    def __init__(self, spacy_model: Optional[str] = None) -> None:
+    def __init__(
+        self, spacy_model: Optional[str] = None, use_ensemble: bool = False
+    ) -> None:
         """Initialize the local extractor.
 
         Args:
             spacy_model: Name of the spaCy model to load. Defaults to config value.
+            use_ensemble: If True, use NER ensemble instead of just spaCy.
         """
         super().__init__(mode=ExtractionMode.LOCAL)
         settings = get_settings()
         self._model_name = spacy_model or settings.spacy_model
         self._nlp = None
+        self._use_ensemble = use_ensemble
         self._entity_config = _load_entity_config()
+        self._ensemble = None
 
     @property
     def nlp(self):
@@ -53,6 +58,35 @@ class LocalExtractor(BaseExtractor):
 
             self._nlp = spacy.load(self._model_name)
         return self._nlp
+
+    def _get_ensemble(self):
+        """Get or create the NER ensemble instance."""
+        if self._ensemble is None:
+            from src.extractors.ner_engines import HuggingFaceNER, SpaCyNER
+            from src.extractors.ner_ensemble import NERensemble
+
+            engines = [SpaCyNER(model_name=self._model_name), HuggingFaceNER()]
+            self._ensemble = NERensemble(engines=engines)
+        return self._ensemble
+
+    def _extract_with_ensemble(self, text: str) -> Dict[str, Any]:
+        """Extract entities using the NER ensemble.
+
+        Args:
+            text: Text to process.
+
+        Returns:
+            Dictionary of extracted entities grouped by type.
+        """
+        ensemble = self._get_ensemble()
+        results = ensemble.extract_entities(text)
+
+        # Convert from ensemble format (value, confidence) tuples to flat lists
+        entities: Dict[str, Any] = {}
+        for entity_type, values in results.items():
+            entities[entity_type] = [v for v, _ in values]
+
+        return entities
 
     async def extract(self, document: Document) -> ExtractionResult:
         """Extract entities from a document using spaCy and regex patterns.
@@ -68,13 +102,16 @@ class LocalExtractor(BaseExtractor):
         start_time = time.time()
         text = document.raw_text or document.content or ""
 
-        # Extract entities using spaCy NER
-        spacy_entities = self._extract_with_spacy(text)
+        # Extract entities using NER (ensemble or spaCy only)
+        if self._use_ensemble:
+            spacy_entities = self._extract_with_ensemble(text)
+        else:
+            spacy_entities = self._extract_with_spacy(text)
 
         # Extract entities using regex patterns from entity config
         regex_entities = self._extract_with_regex(text, self._entity_config)
 
-        # Merge results (spaCy entities take precedence for overlapping fields)
+        # Merge results (NER entities take precedence for overlapping fields)
         merged_entities: Dict[str, Any] = {}
         merged_entities.update(regex_entities)
         merged_entities.update(spacy_entities)

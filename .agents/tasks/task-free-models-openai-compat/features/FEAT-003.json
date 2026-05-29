@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Enhanced NER layer with HuggingFace transformer models, LayoutLM for layout-aware extraction, and NER ensemble with confidence-weighted merging. Integrates these into the local extractor as configurable options.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create src/extractors/ner_engines/__init__.py - package init exporting all NER engine classes.",
     "Create src/extractors/ner_engines/base_ner.py - BaseNEREngine abstract class with methods: extract_entities(text) -> Dict[str, List[Tuple[str, float]]] (entity_type -> list of (value, confidence)), is_available() -> bool, get_name() -> str. The return format maps entity types to lists of (extracted_value, confidence_score) tuples.",

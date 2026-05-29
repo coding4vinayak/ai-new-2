@@ -1,20 +1,11 @@
 """Base extractor interface defining the contract for all extraction modes."""
 
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import Any, Dict, Optional
 
 from src.models.confidence import ConfidenceReport
 from src.models.document import Document
-from src.models.extraction_result import ExtractionResult
-
-
-class ExtractionMode(str, Enum):
-    """Available extraction modes."""
-
-    LOCAL = "local"
-    API = "api"
-    HYBRID = "hybrid"
+from src.models.extraction_result import ExtractionMode, ExtractionResult
 
 
 class BaseExtractor(ABC):

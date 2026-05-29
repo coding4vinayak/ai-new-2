@@ -7,9 +7,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from src.extractors.api_extractor import APIExtractor
-from src.extractors.base import BaseExtractor, ExtractionMode
+from src.extractors.base import BaseExtractor
 from src.extractors.hybrid_extractor import HybridExtractor
 from src.extractors.local_extractor import LocalExtractor
+from src.models.extraction_result import ExtractionMode
 from src.models.document import Document, FileType
 from src.models.extraction_result import ExtractionResult
 from src.processors.docx_processor import DocxProcessor
@@ -224,18 +225,98 @@ class DocumentAgent:
     ) -> ExtractionResult:
         """Run industry-specific analysis on the extraction result.
 
-        This is a hook for industry analyzers (contract, invoice, compliance, etc.)
-        that will be implemented in FEAT-003.
+        Invokes the appropriate industry analyzers based on document type:
+        - contract: ContractAnalyzer
+        - invoice: InvoiceProcessor
+        - All types: PIIDetector, ComplianceChecker
+
+        The document classifier is used when no explicit doc_type is provided.
 
         Args:
             result: The extraction result to analyze.
             doc_type: Optional document type hint.
 
         Returns:
-            ExtractionResult potentially enriched with industry analysis.
+            ExtractionResult enriched with industry analysis metadata.
         """
-        # Industry analysis modules will be implemented in FEAT-003
-        # For now, return the result unchanged
+        try:
+            from src.industry.compliance_checker import ComplianceChecker
+            from src.industry.contract_analyzer import ContractAnalyzer
+            from src.industry.document_classifier import DocumentClassifier
+            from src.industry.invoice_processor import InvoiceProcessor
+            from src.industry.pii_detector import PIIDetector
+
+            # Classify document type if not provided
+            effective_type = doc_type
+            if not effective_type:
+                classifier = DocumentClassifier()
+                text = result.raw_text or ""
+                if text.strip():
+                    classified_type, confidence = classifier.classify(text)
+                    effective_type = classified_type.value
+                    result.entities.setdefault("_classification", {
+                        "type": classified_type.value,
+                        "confidence": confidence,
+                    })
+
+            # Run PII detection on all document types
+            pii_detector = PIIDetector()
+            text = result.raw_text or ""
+            if text.strip():
+                pii_entities = pii_detector.detect_pii(text)
+                if pii_entities:
+                    pii_report = pii_detector.generate_pii_report(pii_entities)
+                    result.entities.setdefault("_pii", {
+                        "total_entities": pii_report.total_entities,
+                        "risk_level": pii_report.risk_level,
+                        "counts_by_type": pii_report.counts_by_type,
+                    })
+
+            # Run type-specific analysis
+            if effective_type and effective_type.upper() == "CONTRACT":
+                analyzer = ContractAnalyzer()
+                analysis = analyzer.analyze(result)
+                result.entities.setdefault("_contract_analysis", {
+                    "clauses_found": len(analysis.clauses),
+                    "obligations_found": len(analysis.obligations),
+                    "key_dates": len(analysis.key_dates),
+                    "risk_score": analysis.risk_score,
+                    "risk_factors": analysis.risk_factors,
+                    "recommendations": analysis.recommendations,
+                })
+
+            elif effective_type and effective_type.upper() == "INVOICE":
+                processor = InvoiceProcessor()
+                invoice_data = processor.process(result)
+                result.entities.setdefault("_invoice", {
+                    "vendor": invoice_data.vendor,
+                    "invoice_number": invoice_data.invoice_number,
+                    "total": invoice_data.total,
+                    "currency": invoice_data.currency,
+                    "line_items_count": len(invoice_data.line_items),
+                    "validation_status": invoice_data.validation_status.value,
+                    "validation_errors": invoice_data.validation_errors,
+                })
+
+            # Run compliance check for contracts and legal docs
+            if effective_type and effective_type.upper() in ("CONTRACT", "LEGAL"):
+                checker = ComplianceChecker()
+                compliance_report = checker.check_compliance(
+                    document_text=text,
+                    doc_type=effective_type.upper(),
+                )
+                result.entities.setdefault("_compliance", {
+                    "compliant": compliance_report.compliant,
+                    "risk_level": compliance_report.risk_level.value,
+                    "findings_count": len(compliance_report.findings),
+                    "missing_clauses": compliance_report.missing_clauses,
+                    "recommendations": compliance_report.recommendations,
+                })
+
+        except Exception as e:
+            logger.warning(f"Industry analysis failed: {e}")
+            result.warnings.append(f"Industry analysis partially failed: {str(e)}")
+
         return result
 
     async def _trigger_actions(self, result: ExtractionResult) -> List[Dict[str, Any]]:

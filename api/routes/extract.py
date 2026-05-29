@@ -6,17 +6,29 @@ import time
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, File, Query, UploadFile
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 
 router = APIRouter()
 
+# Maximum upload size (50 MB)
+_MAX_FILE_SIZE = 50 * 1024 * 1024
+
 
 async def _save_upload(file: UploadFile) -> str:
-    """Save an uploaded file to a temporary location and return the path."""
+    """Save an uploaded file to a temporary location and return the path.
+
+    Raises:
+        HTTPException: If the file exceeds the maximum allowed size.
+    """
     os.makedirs("uploads", exist_ok=True)
+    content = await file.read()
+    if len(content) > _MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File size ({len(content)} bytes) exceeds maximum allowed size of {_MAX_FILE_SIZE // (1024 * 1024)} MB",
+        )
     suffix = os.path.splitext(file.filename or "document.txt")[1]
     temp_path = os.path.join("uploads", f"{uuid4()}{suffix}")
-    content = await file.read()
     with open(temp_path, "wb") as f:
         f.write(content)
     return temp_path

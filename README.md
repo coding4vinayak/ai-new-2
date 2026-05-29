@@ -88,8 +88,11 @@ docker-compose up --build
 pyenv install 3.11.14
 pyenv shell 3.11.14
 
-# Install dependencies
+# Install core dependencies
 pip install -r requirements.txt
+
+# (Optional) Install ML model dependencies for ensemble/TrOCR/PaddleOCR/LayoutLM
+pip install -r requirements-ml.txt
 
 # Download spaCy model
 python -m spacy download en_core_web_sm

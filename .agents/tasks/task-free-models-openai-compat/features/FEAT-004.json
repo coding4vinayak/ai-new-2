@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "Ensemble orchestrator that ties together OCR ensemble and NER ensemble into a unified enhanced local extraction mode, with API route, updated orchestrator integration, and comprehensive documentation updates.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/extractors/ensemble_extractor.py - a new BaseExtractor implementation (ExtractionMode can be extended or use LOCAL). This extractor orchestrates the full enhanced pipeline: (a) OCR ensemble for image/scanned docs, (b) NER ensemble for entity extraction, (c) optional LayoutLM for structured docs, (d) optional local LLM for additional extraction. Configuration-driven: reads from settings.yaml which models to include. Implements extract() by running the configured ensemble pipeline and merging all results with confidence-weighted scoring.",
     "Update src/models/extraction_result.py to add ExtractionMode.ENSEMBLE = 'ensemble' to the enum.",
@@ -27,5 +27,5 @@
     "python -c \"from src.models.extraction_result import ExtractionMode; assert 'ensemble' == ExtractionMode.ENSEMBLE.value; print('OK')\""
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 162 tests pass (144 existing + 18 new). EnsembleExtractor overrides validate_document to allow image documents without text (OCR fills in text). Pydantic deprecation warnings are pre-existing. The ensemble extractor uses weight 0.8 for NER, 0.85 for LayoutLM, 0.75 for local LLM to determine merge priority."
 }

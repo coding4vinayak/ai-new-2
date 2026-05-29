@@ -4,6 +4,7 @@ extraction:
     - api
     - hybrid
     - local_llm
+    - ensemble
   default_mode: hybrid
   confidence_thresholds:
     hybrid_escalation: 0.7
@@ -67,12 +68,20 @@ free_models:
         model: db_resnet50
 
 ensemble:
+  # OCR engines to include in ensemble (tesseract, trocr, paddleocr, doctr)
   ocr_engines:
     - tesseract
+  # NER models to include in ensemble (spacy_sm, spacy_lg, huggingface_ner)
   ner_models:
     - spacy_sm
+  # Strategy for merging results: confidence_weighted or majority
   voting_strategy: confidence_weighted
+  # Minimum confidence threshold for including entities in final results
   confidence_threshold: 0.6
+  # Optional: include LayoutLM for structure-aware extraction (forms, invoices)
+  use_layoutlm: false
+  # Optional: include local LLM for additional extraction
+  use_local_llm: false
 
 supported_file_types:
   - pdf

@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from src.extractors.api_extractor import APIExtractor
 from src.extractors.base import BaseExtractor
+from src.extractors.ensemble_extractor import EnsembleExtractor
 from src.extractors.hybrid_extractor import HybridExtractor
 from src.extractors.local_extractor import LocalExtractor
 from src.extractors.openai_compat_extractor import OpenAICompatExtractor
@@ -46,6 +47,7 @@ class DocumentAgent:
         self._api_extractor: Optional[APIExtractor] = None
         self._hybrid_extractor: Optional[HybridExtractor] = None
         self._openai_compat_extractor: Optional[OpenAICompatExtractor] = None
+        self._ensemble_extractor: Optional[EnsembleExtractor] = None
 
         # Action engine (lazy import to avoid circular dependencies)
         self._action_engine = None
@@ -76,6 +78,12 @@ class DocumentAgent:
         if self._openai_compat_extractor is None:
             self._openai_compat_extractor = OpenAICompatExtractor()
         return self._openai_compat_extractor
+
+    def _get_ensemble_extractor(self) -> EnsembleExtractor:
+        """Get or create the ensemble extractor instance."""
+        if self._ensemble_extractor is None:
+            self._ensemble_extractor = EnsembleExtractor()
+        return self._ensemble_extractor
 
     def _get_action_engine(self):
         """Get or create the action engine instance."""
@@ -210,7 +218,7 @@ class DocumentAgent:
         """Select the appropriate extractor based on extraction mode.
 
         Args:
-            mode: Extraction mode string ('local', 'api', 'hybrid', 'local_llm').
+            mode: Extraction mode string ('local', 'api', 'hybrid', 'local_llm', 'ensemble').
 
         Returns:
             BaseExtractor instance for the specified mode.
@@ -220,6 +228,7 @@ class DocumentAgent:
             "api": self._get_api_extractor,
             "hybrid": self._get_hybrid_extractor,
             "local_llm": self._get_openai_compat_extractor,
+            "ensemble": self._get_ensemble_extractor,
         }
 
         factory = mode_map.get(mode.lower())

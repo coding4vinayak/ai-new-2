@@ -113,6 +113,22 @@ async def extract_local_llm(
     return await _extract_with_mode(file, "local_llm", document_type)
 
 
+@router.post("/ensemble")
+async def extract_ensemble(
+    file: UploadFile = File(...),
+    document_type: Optional[str] = Query(None, description="Document type hint"),
+):
+    """Extract entities using the full ensemble pipeline.
+
+    Combines OCR ensemble (for scanned/image docs), NER ensemble (multiple NER
+    engines with confidence-weighted merging), optional LayoutLM for structured
+    documents, and optional local LLM for additional extraction.
+
+    Configure which engines to include via config/settings.yaml ensemble section.
+    """
+    return await _extract_with_mode(file, "ensemble", document_type)
+
+
 @router.post("/auto")
 async def extract_auto(
     file: UploadFile = File(...),

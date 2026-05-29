@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "Ensemble orchestrator that ties together OCR ensemble and NER ensemble into a unified enhanced local extraction mode, with API route, updated orchestrator integration, and comprehensive documentation updates.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create src/extractors/ensemble_extractor.py - a new BaseExtractor implementation (ExtractionMode can be extended or use LOCAL). This extractor orchestrates the full enhanced pipeline: (a) OCR ensemble for image/scanned docs, (b) NER ensemble for entity extraction, (c) optional LayoutLM for structured docs, (d) optional local LLM for additional extraction. Configuration-driven: reads from settings.yaml which models to include. Implements extract() by running the configured ensemble pipeline and merging all results with confidence-weighted scoring.",
     "Update src/models/extraction_result.py to add ExtractionMode.ENSEMBLE = 'ensemble' to the enum.",

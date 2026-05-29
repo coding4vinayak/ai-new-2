@@ -1,0 +1,159 @@
+MASTER SERVICES AGREEMENT
+
+This Master Services Agreement ("Agreement") is entered into as of January 15, 2024
+("Effective Date") by and between:
+
+Party A: TechVision Solutions Inc., a Delaware corporation with offices at
+1250 Innovation Drive, Suite 400, San Francisco, CA 94107 ("Provider")
+
+Party B: GlobalRetail Corp., a New York corporation with offices at
+789 Commerce Avenue, New York, NY 10001 ("Client")
+
+WHEREAS, Provider has expertise in artificial intelligence and document processing
+technologies; and
+
+WHEREAS, Client desires to engage Provider to deliver certain professional services
+as described herein;
+
+NOW, THEREFORE, in consideration of the mutual covenants contained herein, the
+parties agree as follows:
+
+1. TERM AND EFFECTIVE DATE
+
+1.1 This Agreement shall commence on the Effective Date and continue for a period
+of twenty-four (24) months, unless earlier terminated in accordance with Section 8
+of this Agreement.
+
+1.2 Renewal Date: January 15, 2026. The Agreement shall automatically renew for
+successive one-year periods unless either party provides written notice of
+non-renewal at least ninety (90) days prior to the end of the then-current term.
+
+2. SERVICES AND DELIVERABLES
+
+2.1 Provider shall deliver AI-powered document intelligence services including but
+not limited to: entity extraction, contract analysis, compliance checking, and
+batch document processing capabilities.
+
+2.2 Provider shall maintain 99.5% uptime for all production services, measured on a
+monthly basis.
+
+2.3 The Client shall provide access to necessary documents and systems within five
+(5) business days of request.
+
+3. PAYMENT TERMS
+
+3.1 Client shall pay Provider a monthly fee of $75,000.00 USD for the base services
+described in Exhibit A.
+
+3.2 Payment is due within Net 30 days of invoice date.
+
+3.3 Late payments shall accrue interest at a rate of 1.5% per month.
+
+3.4 Provider shall submit invoices on the first business day of each month. Total
+annual contract value: $900,000.00.
+
+4. CONFIDENTIALITY
+
+4.1 Each party agrees to maintain in confidence all Confidential Information
+disclosed by the other party. "Confidential Information" means any non-public
+information, including but not limited to trade secrets, proprietary algorithms,
+customer data, financial information, and business strategies.
+
+4.2 The receiving party shall not disclose Confidential Information to any third
+party without prior written consent of the disclosing party, except to employees
+and contractors who have a need to know and are bound by similar confidentiality
+obligations.
+
+4.3 This confidentiality obligation shall survive termination of this Agreement for
+a period of five (5) years.
+
+5. INTELLECTUAL PROPERTY RIGHTS
+
+5.1 All intellectual property developed by Provider in the course of performing
+services under this Agreement shall be owned by Provider, unless otherwise agreed
+in writing.
+
+5.2 Client shall receive a non-exclusive, worldwide, perpetual license to use any
+deliverables created specifically for Client under this Agreement.
+
+5.3 Neither party shall use the other party's trademarks, trade names, or logos
+without prior written permission.
+
+6. INDEMNIFICATION
+
+6.1 Provider shall indemnify, defend, and hold harmless Client from and against any
+and all claims, damages, losses, costs, and expenses (including reasonable
+attorneys' fees) arising from: (a) Provider's breach of this Agreement; (b) any
+infringement of third-party intellectual property rights by the deliverables; or
+(c) Provider's negligence or willful misconduct.
+
+6.2 Client shall indemnify Provider against claims arising from Client's misuse of
+the deliverables or breach of this Agreement.
+
+7. LIMITATION OF LIABILITY
+
+7.1 IN NO EVENT SHALL EITHER PARTY BE LIABLE TO THE OTHER FOR ANY INDIRECT,
+INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES.
+
+7.2 The total aggregate liability of either party under this Agreement shall not
+exceed the total fees paid or payable in the twelve (12) months preceding the claim.
+
+8. TERMINATION
+
+8.1 Either party may terminate this Agreement for cause if the other party commits
+a material breach and fails to cure such breach within thirty (30) days after
+receiving written notice thereof.
+
+8.2 Either party may terminate this Agreement without cause upon ninety (90) days
+written notice to the other party.
+
+8.3 Expiry Date: January 15, 2026. Upon termination, Provider shall return or
+destroy all Client Confidential Information within fifteen (15) days.
+
+9. GOVERNING LAW AND DISPUTE RESOLUTION
+
+9.1 This Agreement shall be governed by and construed in accordance with the laws
+of the State of Delaware, without regard to its conflicts of law provisions.
+
+9.2 Any dispute arising under this Agreement shall first be subject to good faith
+negotiation for a period of thirty (30) days. If not resolved, disputes shall be
+submitted to binding arbitration in accordance with the rules of the American
+Arbitration Association, with proceedings conducted in San Francisco, California.
+
+10. FORCE MAJEURE
+
+10.1 Neither party shall be liable for any failure or delay in performing its
+obligations under this Agreement to the extent that such failure or delay results
+from causes beyond its reasonable control, including but not limited to: acts of
+God, natural disasters, pandemics, government actions, war, terrorism, labor
+disputes, or failures of third-party telecommunications or power systems.
+
+11. GENERAL PROVISIONS
+
+11.1 This Agreement constitutes the entire agreement between the parties and
+supersedes all prior negotiations, representations, and agreements relating to
+the subject matter hereof.
+
+11.2 This Agreement may not be amended except by a written instrument signed by
+both parties.
+
+11.3 Neither party may assign this Agreement without the prior written consent of
+the other party.
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the Effective Date.
+
+Provider: TechVision Solutions Inc.
+By: ___________________________
+Name: Sarah Johnson
+Title: Chief Executive Officer
+Date: January 15, 2024
+Email: sarah.johnson@techvision.com
+Phone: (415) 555-0142
+
+Client: GlobalRetail Corp.
+By: ___________________________
+Name: Michael Chen
+Title: Vice President of Technology
+Date: January 15, 2024
+Email: m.chen@globalretail.com
+Phone: (212) 555-0198

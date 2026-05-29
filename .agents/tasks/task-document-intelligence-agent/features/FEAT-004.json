@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "FastAPI REST API layer with all endpoints, comprehensive test suite with sample documents, Dockerfile, docker-compose.yml, and README documentation. This makes the system accessible and deployable.",
-  "status": "pending",
+  "status": "completed",
   "steps": [
     "Create api/main.py with FastAPI app: Configure CORS, include all route routers, add startup event to initialize database (audit logger init_db), configure OpenAPI docs with title 'Document Intelligence Agent API' and description. Add exception handlers for common errors. Mount static files if needed for document uploads (create uploads/ directory)",
     "Create api/routes/health.py with: GET /health returns {status: 'healthy', version, uptime}, GET /metrics returns basic metrics (total_extractions, avg_processing_time, extractions_by_mode from audit log)",
@@ -38,5 +38,5 @@
     "Run: cd /projects/sandbox/ai-new-2 && docker build -t doc-intelligence-agent:test . && echo 'Docker build OK'"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 35 tests pass (8 models + 8 API extractor + 5 local extractor + 4 hybrid extractor + 5 contract analyzer + 5 batch processor). FastAPI app loads with 23 routes. Docker builds successfully with multi-stage build. The DocumentAgent import in batch_processor.py is local (inside _process_single) so tests must patch src.agent.orchestrator.DocumentAgent. BaseExtractor validates non-empty text, so empty doc tests should assert ValueError."
 }

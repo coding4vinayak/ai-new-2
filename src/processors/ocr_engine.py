@@ -1,7 +1,11 @@
-"""OCR engine for text extraction from images using Tesseract."""
+"""OCR engine for text extraction from images using Tesseract.
+
+This module maintains backward compatibility with the original OCREngine class
+while providing factory functions to access the new multi-engine OCR system.
+"""
 
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from PIL import Image, ImageEnhance, ImageFilter
 
@@ -125,3 +129,90 @@ class OCREngine:
             "Korean": "kor",
         }
         return script_map.get(script, "eng")
+
+
+def get_ocr_engine(engine_name: str, **kwargs) -> "BaseOCREngine":
+    """Factory function to get an OCR engine by name.
+
+    Args:
+        engine_name: Name of the engine ('tesseract', 'trocr', 'paddleocr', 'doctr').
+        **kwargs: Additional keyword arguments passed to the engine constructor.
+
+    Returns:
+        An instance of the requested OCR engine.
+
+    Raises:
+        ValueError: If the engine name is not recognized.
+    """
+    from src.processors.ocr_engines import (
+        DocTREngine,
+        PaddleOCREngine,
+        TesseractOCR,
+        TrOCREngine,
+    )
+    from src.processors.ocr_engines.base_ocr import BaseOCREngine
+
+    engines: Dict[str, type] = {
+        "tesseract": TesseractOCR,
+        "trocr": TrOCREngine,
+        "paddleocr": PaddleOCREngine,
+        "doctr": DocTREngine,
+    }
+
+    engine_class = engines.get(engine_name)
+    if engine_class is None:
+        raise ValueError(
+            f"Unknown OCR engine: {engine_name}. "
+            f"Available: {list(engines.keys())}"
+        )
+
+    return engine_class(**kwargs)
+
+
+def get_ocr_ensemble(
+    engine_names: Optional[List[str]] = None,
+    min_engines: int = 1,
+    similarity_threshold: float = 0.7,
+    fallback_strategy: str = "highest_confidence",
+) -> "OCREnsemble":
+    """Factory function to create a configured OCR ensemble.
+
+    Args:
+        engine_names: List of engine names to include. If None, uses all available.
+        min_engines: Minimum number of engines that must succeed.
+        similarity_threshold: Threshold for text similarity (0-1).
+        fallback_strategy: Strategy when engines disagree.
+
+    Returns:
+        Configured OCREnsemble instance.
+    """
+    from src.processors.ocr_ensemble import OCREnsemble
+    from src.processors.ocr_engines import (
+        DocTREngine,
+        PaddleOCREngine,
+        TesseractOCR,
+        TrOCREngine,
+    )
+
+    all_engines = {
+        "tesseract": TesseractOCR,
+        "trocr": TrOCREngine,
+        "paddleocr": PaddleOCREngine,
+        "doctr": DocTREngine,
+    }
+
+    if engine_names is None:
+        engine_names = list(all_engines.keys())
+
+    engines = []
+    for name in engine_names:
+        engine_class = all_engines.get(name)
+        if engine_class:
+            engines.append(engine_class())
+
+    return OCREnsemble(
+        engines=engines,
+        min_engines=min_engines,
+        similarity_threshold=similarity_threshold,
+        fallback_strategy=fallback_strategy,
+    )

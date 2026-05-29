@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Add Free Model Registry and OpenAI-compatible local LLM integration. Creates the model registry system, adds Ollama/LM Studio/LocalAI support via the OpenAI-compatible API pattern, and updates config/settings to support local LLM endpoints.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/models/model_registry.py - a central FreeModelRegistry class that tracks available models (OCR engines, NER models, LLM endpoints, layout models). Each model has: name, type (ocr/ner/llm/layout), status (available/unavailable/checking), health_check() method. The registry should be a singleton with methods: register_model(), get_available_models(type), check_health(model_name), get_model(name). Include graceful fallback logic - if a model is unavailable, log a warning and skip it.",
     "Create src/extractors/openai_compat_extractor.py - a new extractor that uses ANY OpenAI-compatible endpoint. It should: (a) accept base_url, model_name, api_key (optional) as constructor params, (b) use the openai.AsyncOpenAI client with custom base_url parameter, (c) follow the same pattern as api_extractor.py (_build_prompt, _call_openai pattern) but pointing to the custom endpoint, (d) include specific support for Ollama (default base_url http://localhost:11434/v1), LM Studio (http://localhost:1234/v1), LocalAI (http://localhost:8080/v1), vLLM, text-generation-webui, (e) model selection (llama3, mistral, phi3, codellama, etc.), (f) health check method that pings the endpoint's /models or /v1/models list.",
@@ -30,5 +30,5 @@
     "python -c \"from src.models.model_registry import FreeModelRegistry; print('OK')\""
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 65 tests pass (35 existing + 30 new). Pydantic deprecation warnings about class-based Config are pre-existing from the original code pattern. The new optional ML dependencies (torch, transformers, paddleocr, etc.) install successfully under OPEN_INTERNET mode. The openai library natively supports base_url parameter for any OpenAI-compatible endpoint."
 }

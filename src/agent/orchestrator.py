@@ -231,6 +231,8 @@ class DocumentAgent:
         - All types: PIIDetector, ComplianceChecker
 
         The document classifier is used when no explicit doc_type is provided.
+        Each module is wrapped in its own error handler so a failure in one
+        does not prevent the others from running.
 
         Args:
             result: The extraction result to analyze.
@@ -239,18 +241,19 @@ class DocumentAgent:
         Returns:
             ExtractionResult enriched with industry analysis metadata.
         """
-        try:
-            from src.industry.compliance_checker import ComplianceChecker
-            from src.industry.contract_analyzer import ContractAnalyzer
-            from src.industry.document_classifier import DocumentClassifier
-            from src.industry.invoice_processor import InvoiceProcessor
-            from src.industry.pii_detector import PIIDetector
+        from src.industry.compliance_checker import ComplianceChecker
+        from src.industry.contract_analyzer import ContractAnalyzer
+        from src.industry.document_classifier import DocumentClassifier
+        from src.industry.invoice_processor import InvoiceProcessor
+        from src.industry.pii_detector import PIIDetector
 
-            # Classify document type if not provided
-            effective_type = doc_type
-            if not effective_type:
+        text = result.raw_text or ""
+
+        # Classify document type if not provided
+        effective_type = doc_type
+        if not effective_type:
+            try:
                 classifier = DocumentClassifier()
-                text = result.raw_text or ""
                 if text.strip():
                     classified_type, confidence = classifier.classify(text)
                     effective_type = classified_type.value
@@ -258,10 +261,13 @@ class DocumentAgent:
                         "type": classified_type.value,
                         "confidence": confidence,
                     })
+            except Exception as e:
+                logger.warning(f"Document classification failed: {e}")
+                result.warnings.append(f"Document classification failed: {str(e)}")
 
-            # Run PII detection on all document types
+        # Run PII detection on all document types
+        try:
             pii_detector = PIIDetector()
-            text = result.raw_text or ""
             if text.strip():
                 pii_entities = pii_detector.detect_pii(text)
                 if pii_entities:
@@ -271,9 +277,13 @@ class DocumentAgent:
                         "risk_level": pii_report.risk_level,
                         "counts_by_type": pii_report.counts_by_type,
                     })
+        except Exception as e:
+            logger.warning(f"PII detection failed: {e}")
+            result.warnings.append(f"PII detection failed: {str(e)}")
 
-            # Run type-specific analysis
-            if effective_type and effective_type.upper() == "CONTRACT":
+        # Run type-specific analysis
+        if effective_type and effective_type.upper() == "CONTRACT":
+            try:
                 analyzer = ContractAnalyzer()
                 analysis = analyzer.analyze(result)
                 result.entities.setdefault("_contract_analysis", {
@@ -284,8 +294,12 @@ class DocumentAgent:
                     "risk_factors": analysis.risk_factors,
                     "recommendations": analysis.recommendations,
                 })
+            except Exception as e:
+                logger.warning(f"Contract analysis failed: {e}")
+                result.warnings.append(f"Contract analysis failed: {str(e)}")
 
-            elif effective_type and effective_type.upper() == "INVOICE":
+        elif effective_type and effective_type.upper() == "INVOICE":
+            try:
                 processor = InvoiceProcessor()
                 invoice_data = processor.process(result)
                 result.entities.setdefault("_invoice", {
@@ -297,9 +311,13 @@ class DocumentAgent:
                     "validation_status": invoice_data.validation_status.value,
                     "validation_errors": invoice_data.validation_errors,
                 })
+            except Exception as e:
+                logger.warning(f"Invoice processing failed: {e}")
+                result.warnings.append(f"Invoice processing failed: {str(e)}")
 
-            # Run compliance check for contracts and legal docs
-            if effective_type and effective_type.upper() in ("CONTRACT", "LEGAL"):
+        # Run compliance check for contracts and legal docs
+        if effective_type and effective_type.upper() in ("CONTRACT", "LEGAL"):
+            try:
                 checker = ComplianceChecker()
                 compliance_report = checker.check_compliance(
                     document_text=text,
@@ -312,10 +330,9 @@ class DocumentAgent:
                     "missing_clauses": compliance_report.missing_clauses,
                     "recommendations": compliance_report.recommendations,
                 })
-
-        except Exception as e:
-            logger.warning(f"Industry analysis failed: {e}")
-            result.warnings.append(f"Industry analysis partially failed: {str(e)}")
+            except Exception as e:
+                logger.warning(f"Compliance check failed: {e}")
+                result.warnings.append(f"Compliance check failed: {str(e)}")
 
         return result
 

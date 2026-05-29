@@ -31,17 +31,27 @@ async def _run_batch_in_background(
         mode: Extraction mode.
         job_id: Pre-created job ID for tracking.
     """
-    result = await _processor.process_batch(
-        file_paths=file_paths,
-        mode=mode,
-    )
+    try:
+        result = await _processor.process_batch(
+            file_paths=file_paths,
+            mode=mode,
+            job_id=job_id,
+        )
 
-    # Store result metadata
-    _job_metadata[job_id] = {
-        "file_paths": file_paths,
-        "mode": mode,
-        "result": result.model_dump(),
-    }
+        # Store result metadata
+        _job_metadata[job_id] = {
+            "file_paths": file_paths,
+            "mode": mode,
+            "result": result.model_dump(),
+        }
+    finally:
+        # Clean up uploaded files after processing completes
+        for path in file_paths:
+            if os.path.exists(path):
+                try:
+                    os.remove(path)
+                except OSError:
+                    pass
 
 
 @router.post("/process")

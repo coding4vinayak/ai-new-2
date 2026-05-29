@@ -69,6 +69,7 @@ class BatchProcessor:
         file_paths: List[str],
         mode: Optional[str] = None,
         options: Optional[Dict[str, Any]] = None,
+        job_id: Optional[str] = None,
     ) -> BatchResult:
         """Process a batch of documents concurrently.
 
@@ -76,16 +77,17 @@ class BatchProcessor:
             file_paths: List of file paths to process.
             mode: Extraction mode ('local', 'api', 'hybrid').
             options: Additional processing options.
+            job_id: Optional pre-created job ID. If not provided, a new one is generated.
 
         Returns:
             BatchResult with aggregated results.
         """
         options = options or {}
-        job_id = str(uuid4())
+        if job_id is None:
+            job_id = str(uuid4())
+            # Create the job in the tracker only if we generated the ID
+            self._tracker.create_job(job_id, len(file_paths))
         start_time = time.time()
-
-        # Create the job in the tracker
-        self._tracker.create_job(job_id, len(file_paths))
         self._cancellation_flags[job_id] = False
 
         # Create semaphore for concurrency control

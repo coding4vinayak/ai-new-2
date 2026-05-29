@@ -97,9 +97,9 @@ class WebhookClient:
             Hex-encoded HMAC signature.
         """
         return hmac.new(
-            secret.encode("utf-8"),
-            payload.encode("utf-8"),
-            hashlib.sha256,
+            key=secret.encode("utf-8"),
+            msg=payload.encode("utf-8"),
+            digestmod=hashlib.sha256,
         ).hexdigest()
 
     async def dispatch_event(

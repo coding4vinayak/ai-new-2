@@ -1,0 +1,7 @@
+{
+  "task_id": "task-document-intelligence-agent",
+  "task_description": "Build an AI Document/Contract Intelligence Agent with 3 extraction modes (local, API, hybrid), enterprise features (contract analysis, invoice processing, compliance checking, PII detection, batch processing), an action engine for automated responses, and a FastAPI REST API layer.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}

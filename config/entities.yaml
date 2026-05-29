@@ -1,0 +1,54 @@
+entities:
+  contract:
+    - name: party_names
+      type: list
+      description: Names of all parties involved in the contract
+    - name: effective_date
+      type: date
+      description: Date when the contract becomes effective
+    - name: termination_date
+      type: date
+      description: Date when the contract expires or terminates
+    - name: governing_law
+      type: string
+      description: Jurisdiction and governing law clause
+    - name: payment_terms
+      type: string
+      description: Payment terms and conditions
+
+  invoice:
+    - name: vendor_name
+      type: string
+      description: Name of the vendor or supplier
+    - name: invoice_number
+      type: string
+      description: Unique invoice identifier
+    - name: line_items
+      type: list
+      description: Individual line items with descriptions and amounts
+    - name: total_amount
+      type: monetary
+      description: Total invoice amount
+    - name: due_date
+      type: date
+      description: Payment due date
+    - name: tax_amount
+      type: monetary
+      description: Tax amount applied
+
+  general:
+    - name: dates
+      type: list
+      description: All dates found in the document
+    - name: monetary_amounts
+      type: list
+      description: All monetary values found
+    - name: person_names
+      type: list
+      description: Names of individuals mentioned
+    - name: organization_names
+      type: list
+      description: Names of organizations mentioned
+    - name: addresses
+      type: list
+      description: Physical or mailing addresses found

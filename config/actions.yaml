@@ -1,0 +1,40 @@
+actions:
+  - name: route_to_legal
+    description: Route document to legal team for review
+    trigger:
+      document_type: contract
+      condition: risk_score > 0.8
+    action:
+      type: webhook
+      endpoint: /webhooks/legal-review
+      priority: high
+
+  - name: notify_finance
+    description: Notify finance team of high-value invoice
+    trigger:
+      document_type: invoice
+      condition: amount > 10000
+    action:
+      type: webhook
+      endpoint: /webhooks/finance-alert
+      priority: medium
+
+  - name: flag_compliance
+    description: Flag document for compliance review
+    trigger:
+      document_type: contract
+      condition: missing_clauses detected
+    action:
+      type: webhook
+      endpoint: /webhooks/compliance-flag
+      priority: high
+
+  - name: alert_security
+    description: Alert security when PII detected without consent clause
+    trigger:
+      document_type: any
+      condition: pii_detected AND NOT consent_clause_present
+    action:
+      type: webhook
+      endpoint: /webhooks/security-alert
+      priority: critical

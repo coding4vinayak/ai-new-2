@@ -1,0 +1,34 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Industry features (contract analysis, invoice processing, compliance checking, PII detection, document classification, version comparison) and batch processing with progress tracking. These are the enterprise-grade capabilities.",
+  "status": "pending",
+  "steps": [
+    "Create src/industry/document_classifier.py with DocumentClassifier class: Auto-classifies documents into types (CONTRACT, INVOICE, LEGAL, FINANCIAL, HR, MEDICAL, GENERAL). Methods: classify(text) -> (doc_type, confidence) uses keyword scoring and structural analysis, _keyword_scores(text) checks for type-indicative keywords (e.g., 'whereas', 'hereby' for contracts; 'invoice', 'total due' for invoices), _structural_analysis(text) checks formatting patterns (tables for invoices, numbered clauses for contracts). Returns top classification with confidence",
+    "Create src/industry/contract_analyzer.py with ContractAnalyzer class: Deep contract analysis. Methods: analyze(extraction_result) -> ContractAnalysis model, extract_clauses(text) identifies and categorizes clauses (termination, indemnity, confidentiality, force_majeure, limitation_of_liability, governing_law, payment, IP_rights), extract_obligations(text) -> List[Obligation] with party, description, deadline, track_expiry_dates(result) identifies key dates and computes days-until-expiry, calculate_risk_score(clauses, obligations) -> float scoring based on missing standard clauses, one-sided terms, unusual provisions. ContractAnalysis model includes: clauses, obligations, key_dates, risk_score, risk_factors, recommendations",
+    "Create src/industry/invoice_processor.py with InvoiceProcessor class: Invoice-specific extraction and validation. Methods: process(extraction_result) -> InvoiceData model, extract_line_items(text) parses tabular line items (description, quantity, unit_price, total), validate_amounts(line_items, total) cross-checks line item sum vs stated total, detect_duplicates(invoice_data, history) checks for duplicate invoice numbers, match_vendor(vendor_name, vendor_db) fuzzy matches against known vendors. InvoiceData model: vendor, invoice_number, date, due_date, line_items, subtotal, tax, total, currency, po_number, validation_status",
+    "Create src/industry/compliance_checker.py with ComplianceChecker class: Regulatory compliance analysis. Methods: check_compliance(document, doc_type, jurisdiction) -> ComplianceReport, _check_contract_compliance(text) verifies presence of required clauses (GDPR data processing, termination rights, governing law, dispute resolution), _check_gdpr_compliance(text) checks for data processing terms, retention periods, subject rights, _detect_missing_clauses(text, required_clauses) identifies gaps. ComplianceReport model: compliant (bool), findings: List[ComplianceFinding], missing_clauses, risk_level, recommendations",
+    "Create src/industry/pii_detector.py with PIIDetector class: PII detection and redaction. Methods: detect_pii(text) -> List[PIIEntity] identifies SSN, email, phone, credit card, address, DOB, passport numbers using regex + NER, redact(text, pii_entities, method='mask') replaces PII with [REDACTED] or masked versions, generate_pii_report(pii_entities) -> PIIReport with counts by type and risk assessment. PIIEntity model: type, value, start_pos, end_pos, confidence. Support configurable redaction methods: mask, hash, remove",
+    "Create src/industry/version_comparator.py with VersionComparator class: Compare document versions. Methods: compare(doc_v1, doc_v2) -> ComparisonResult, _diff_text(text1, text2) using difflib for text-level differences, _diff_clauses(clauses1, clauses2) for semantic clause comparison, _identify_changes(diffs) categorizes as added/removed/modified, _assess_significance(changes) rates change importance. ComparisonResult model: changes (List[Change]), summary, added_clauses, removed_clauses, modified_clauses, significance_score",
+    "Create src/batch/progress_tracker.py with ProgressTracker class: Track batch job progress. Methods: create_job(job_id, total_items) -> BatchJob, update_progress(job_id, item_id, status), get_progress(job_id) -> BatchProgress, mark_complete(job_id), mark_failed(job_id, error). BatchJob model: id, status, total_items, completed_items, failed_items, start_time, end_time, progress_pct. Store state in SQLite for persistence across restarts",
+    "Create src/batch/batch_processor.py with BatchProcessor class: Parallel document processing. Methods: async process_batch(file_paths, mode, options) -> BatchResult using asyncio.Semaphore for concurrency control (max from config), _process_single(file_path, mode, semaphore, tracker) wraps individual document processing with error handling and progress updates, get_batch_status(job_id) returns current progress, cancel_batch(job_id) sets cancellation flag. Integrates with ProgressTracker and DocumentAgent orchestrator"
+  ],
+  "acceptance_criteria": [
+    "DocumentClassifier correctly classifies contract-like text as CONTRACT with >0.7 confidence",
+    "ContractAnalyzer extracts clauses and computes risk scores from contract text",
+    "InvoiceProcessor extracts line items and validates totals",
+    "ComplianceChecker identifies missing required clauses",
+    "PIIDetector finds and redacts SSN, email, phone patterns in text",
+    "VersionComparator produces meaningful diffs between two text versions",
+    "BatchProcessor handles multiple documents concurrently with progress tracking",
+    "ProgressTracker persists job state and reports accurate progress percentages"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/ai-new-2 && python -c \"from src.industry.document_classifier import DocumentClassifier; dc = DocumentClassifier(); result = dc.classify('This Agreement is entered into by and between Party A and Party B, whereas...'); print(f'Classification: {result}')\"",
+    "Run: cd /projects/sandbox/ai-new-2 && python -c \"from src.industry.contract_analyzer import ContractAnalyzer; print('ContractAnalyzer OK')\"",
+    "Run: cd /projects/sandbox/ai-new-2 && python -c \"from src.industry.pii_detector import PIIDetector; d = PIIDetector(); result = d.detect_pii('Contact john@example.com or call 555-123-4567'); print(f'Found {len(result)} PII entities')\"",
+    "Run: cd /projects/sandbox/ai-new-2 && python -c \"from src.batch.batch_processor import BatchProcessor; print('BatchProcessor OK')\""
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

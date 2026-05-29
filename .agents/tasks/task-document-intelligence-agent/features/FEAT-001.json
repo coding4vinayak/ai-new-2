@@ -1,0 +1,44 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Foundation layer: Project scaffolding, data models, configuration, document processors, and the base extractor interface. This establishes the core data flow from document input through processing to structured output.",
+  "status": "in_progress",
+  "steps": [
+    "Create requirements.txt with all dependencies: fastapi, uvicorn, pytesseract, spacy, openai, anthropic, pypdf2, pdfplumber, python-docx, Pillow, pyyaml, python-multipart, aiohttp, aiofiles, httpx, pydantic, pydantic-settings, python-dotenv, langdetect, difflib, sqlite3 (stdlib), pytest, pytest-asyncio, pytest-cov",
+    "Create .env.example with OPENAI_API_KEY, ANTHROPIC_API_KEY, TESSERACT_PATH, SPACY_MODEL, DATABASE_URL, WEBHOOK_SECRET placeholders",
+    "Create config/settings.yaml with extraction modes config (local, api, hybrid), confidence thresholds (default 0.7 for hybrid escalation), batch processing limits (max_concurrent=5, max_batch_size=100), API settings (timeout, retry), supported file types, and logging config",
+    "Create config/actions.yaml with sample action rules: route_to_legal (if contract risk_score > 0.8), notify_finance (if invoice amount > 10000), flag_compliance (if missing_clauses detected), alert_security (if PII detected without consent clause)",
+    "Create config/entities.yaml with custom entity definitions: contract entities (party_names, effective_date, termination_date, governing_law, payment_terms), invoice entities (vendor_name, invoice_number, line_items, total_amount, due_date, tax_amount), general entities (dates, monetary_amounts, person_names, organization_names, addresses)",
+    "Create src/__init__.py, src/models/__init__.py, src/extractors/__init__.py, src/processors/__init__.py, src/agent/__init__.py, src/industry/__init__.py, src/batch/__init__.py, src/utils/__init__.py, api/__init__.py, api/routes/__init__.py, tests/__init__.py - all package init files",
+    "Create src/models/confidence.py with ConfidenceScore Pydantic model (score: float 0-1, method: str indicating source, explanation: Optional[str], field_name: str) and ConfidenceReport model (scores: Dict[str, ConfidenceScore], overall_confidence: float, low_confidence_fields: List[str] computed from threshold)",
+    "Create src/models/document.py with Document Pydantic model (id: UUID, filename: str, file_type: enum PDF/IMAGE/DOCX/TEXT, content: Optional[str], raw_text: Optional[str], page_count: int, language: Optional[str], metadata: dict, created_at: datetime, file_path: Optional[str]) and DocumentPage model (page_number: int, text: str, confidence: float)",
+    "Create src/models/extraction_result.py with ExtractionResult model (document_id: UUID, extraction_mode: enum LOCAL/API/HYBRID, entities: Dict[str, Any], confidence_report: ConfidenceReport, raw_text: str, processing_time_ms: float, extracted_at: datetime, extractor_version: str, warnings: List[str]) and BatchExtractionResult model",
+    "Create src/utils/config.py using pydantic-settings BaseSettings to load from .env and YAML. Include Settings class with all config sections (extraction, batch, api_keys, webhooks, database) and a get_settings() singleton function that loads config/settings.yaml and merges with env vars",
+    "Create src/utils/file_utils.py with functions: detect_file_type(file_path) -> FileType enum, validate_file(file_path) -> bool, get_temp_path() -> Path, cleanup_temp_files(), save_upload(upload_file, destination) -> Path",
+    "Create src/utils/audit_logger.py with AuditLogger class using SQLite: init_db() creates extractions table (id, document_id, mode, status, result_summary, timestamp, duration_ms, user_id), log_extraction(), log_action(), get_audit_trail(document_id), get_recent_extractions(limit)",
+    "Create src/utils/webhook_client.py with WebhookClient class: register_webhook(url, events, secret), remove_webhook(id), list_webhooks(), async dispatch_event(event_type, payload) with retry logic and HMAC signing",
+    "Create src/processors/ocr_engine.py with OCREngine class: extract_text(image_path) -> (text, confidence) using pytesseract, preprocess_image(image) using Pillow for deskew/threshold/denoise, detect_language(image) for OCR language hints",
+    "Create src/processors/pdf_processor.py with PDFProcessor class: process(file_path) -> Document, extract_text_pdf(file_path) using pdfplumber for text-based PDFs, extract_scanned_pdf(file_path) using pdf2image + OCR engine for scanned PDFs, detect_if_scanned(file_path) heuristic",
+    "Create src/processors/image_processor.py with ImageProcessor class: process(file_path) -> Document using Pillow to load and OCR engine to extract, supports JPG/PNG/TIFF, includes image preprocessing (resize, enhance contrast)",
+    "Create src/processors/docx_processor.py with DocxProcessor class: process(file_path) -> Document using python-docx, extracts text from paragraphs, tables, headers/footers, preserves basic structure",
+    "Create src/extractors/base.py with abstract BaseExtractor class (ABC): abstract methods extract(document: Document) -> ExtractionResult, get_confidence(result) -> ConfidenceReport. Concrete methods: validate_document(doc), format_output(raw_result). Include ExtractionMode enum (LOCAL, API, HYBRID)"
+  ],
+  "acceptance_criteria": [
+    "All Python package files exist with proper __init__.py modules",
+    "Pydantic models are importable and validate correctly with sample data",
+    "Config loads from YAML files and environment variables",
+    "Document processors can be instantiated (actual OCR/PDF processing tested in integration)",
+    "Base extractor defines the interface contract for all three extraction modes",
+    "requirements.txt installs successfully with pip",
+    "All YAML config files are valid and parseable"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/ai-new-2 && pip install -r requirements.txt",
+    "Run: cd /projects/sandbox/ai-new-2 && python -c \"from src.models.document import Document; from src.models.extraction_result import ExtractionResult; from src.models.confidence import ConfidenceScore; print('Models OK')\"",
+    "Run: cd /projects/sandbox/ai-new-2 && python -c \"from src.utils.config import get_settings; print('Config OK')\"",
+    "Run: cd /projects/sandbox/ai-new-2 && python -c \"from src.extractors.base import BaseExtractor, ExtractionMode; print('Base extractor OK')\"",
+    "Run: cd /projects/sandbox/ai-new-2 && python -c \"import yaml; yaml.safe_load(open('config/settings.yaml')); yaml.safe_load(open('config/actions.yaml')); yaml.safe_load(open('config/entities.yaml')); print('YAML configs OK')\""
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

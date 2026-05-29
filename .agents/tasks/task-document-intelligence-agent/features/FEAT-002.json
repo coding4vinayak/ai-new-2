@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Core extraction engine implementing all three extraction modes (Local, API, Hybrid) with confidence scoring, plus the agent orchestrator and action engine. This is the brain of the system.",
+  "status": "pending",
+  "steps": [
+    "Create src/extractors/local_extractor.py with LocalExtractor(BaseExtractor): Uses spaCy NER + regex patterns + pytesseract OCR. Methods: extract(document) processes text through spaCy pipeline for named entities (PERSON, ORG, DATE, MONEY, GPE), applies regex patterns from config/entities.yaml for structured fields (dates, amounts, invoice numbers), computes per-field confidence based on NER confidence scores and regex match quality. Include _extract_with_spacy(text), _extract_with_regex(text, entity_config), _compute_confidence(entities) methods",
+    "Create src/extractors/api_extractor.py with APIExtractor(BaseExtractor): Integrates with OpenAI GPT-4 and Anthropic Claude. Methods: extract(document) sends document text with structured extraction prompt, _build_prompt(document, entity_config) constructs extraction prompt with entity definitions from config, _call_openai(prompt, text) using openai async client, _call_anthropic(prompt, text) using anthropic async client, _parse_response(raw_response) extracts structured JSON from LLM response. Include retry logic, token limit handling (chunking for long documents), and provider fallback (try OpenAI first, fall back to Claude)",
+    "Create src/extractors/hybrid_extractor.py with HybridExtractor(BaseExtractor): Orchestrates local-first with API fallback. Methods: extract(document) runs LocalExtractor first, evaluates confidence per field against threshold (default 0.7 from config), identifies low_confidence_fields, calls APIExtractor only for those fields, merges results preferring API values for escalated fields. Include _merge_results(local_result, api_result, escalated_fields), _should_escalate(confidence_report, threshold) methods",
+    "Create src/agent/orchestrator.py with DocumentAgent class: Main entry point coordinating the full pipeline. Methods: async process_document(file_path, mode, options) -> ExtractionResult orchestrates processor selection -> extraction -> industry analysis -> actions. Also: _select_processor(file_type), _select_extractor(mode), _run_industry_analysis(result, doc_type), _trigger_actions(result). Include document classification call before extraction to auto-select entity config",
+    "Create src/agent/action_engine.py with ActionEngine class: Evaluates rules from config/actions.yaml against extraction results. Methods: evaluate_rules(extraction_result) -> List[Action], _check_condition(rule_condition, result) supports operators (gt, lt, eq, contains, exists), _execute_action(action) dispatches to appropriate handler (webhook, email, route, flag). Action model: (type, target, payload, triggered_by_rule, timestamp). Load rules from YAML, support dynamic rule updates"
+  ],
+  "acceptance_criteria": [
+    "LocalExtractor extracts entities from plain text using spaCy NER and regex patterns",
+    "APIExtractor constructs proper prompts and can handle OpenAI/Anthropic API responses",
+    "HybridExtractor correctly identifies low-confidence fields and escalates only those to API",
+    "Orchestrator correctly routes documents through the full pipeline based on file type and mode",
+    "ActionEngine evaluates YAML-defined rules against extraction results and triggers appropriate actions",
+    "All extractors implement the BaseExtractor interface consistently",
+    "Confidence scoring produces meaningful scores between 0 and 1"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/ai-new-2 && python -c \"from src.extractors.local_extractor import LocalExtractor; e = LocalExtractor(); print('LocalExtractor OK')\"",
+    "Run: cd /projects/sandbox/ai-new-2 && python -c \"from src.extractors.api_extractor import APIExtractor; e = APIExtractor(); print('APIExtractor OK')\"",
+    "Run: cd /projects/sandbox/ai-new-2 && python -c \"from src.extractors.hybrid_extractor import HybridExtractor; e = HybridExtractor(); print('HybridExtractor OK')\"",
+    "Run: cd /projects/sandbox/ai-new-2 && python -c \"from src.agent.orchestrator import DocumentAgent; print('Orchestrator OK')\"",
+    "Run: cd /projects/sandbox/ai-new-2 && python -c \"from src.agent.action_engine import ActionEngine; print('ActionEngine OK')\""
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

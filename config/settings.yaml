@@ -1,0 +1,44 @@
+extraction:
+  modes:
+    - local
+    - api
+    - hybrid
+  default_mode: hybrid
+  confidence_thresholds:
+    hybrid_escalation: 0.7
+    minimum_acceptable: 0.5
+    high_confidence: 0.9
+
+batch_processing:
+  max_concurrent: 5
+  max_batch_size: 100
+  timeout_per_document_seconds: 120
+  retry_attempts: 3
+
+api:
+  openai:
+    model: gpt-4
+    timeout_seconds: 60
+    max_retries: 3
+    temperature: 0.0
+  anthropic:
+    model: claude-3-sonnet-20240229
+    timeout_seconds: 60
+    max_retries: 3
+    temperature: 0.0
+
+supported_file_types:
+  - pdf
+  - png
+  - jpg
+  - jpeg
+  - tiff
+  - docx
+  - txt
+
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: logs/app.log
+  max_bytes: 10485760
+  backup_count: 5

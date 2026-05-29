@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "Ensemble orchestrator that ties together OCR ensemble and NER ensemble into a unified enhanced local extraction mode, with API route, updated orchestrator integration, and comprehensive documentation updates.",
+  "status": "pending",
+  "steps": [
+    "Create src/extractors/ensemble_extractor.py - a new BaseExtractor implementation (ExtractionMode can be extended or use LOCAL). This extractor orchestrates the full enhanced pipeline: (a) OCR ensemble for image/scanned docs, (b) NER ensemble for entity extraction, (c) optional LayoutLM for structured docs, (d) optional local LLM for additional extraction. Configuration-driven: reads from settings.yaml which models to include. Implements extract() by running the configured ensemble pipeline and merging all results with confidence-weighted scoring.",
+    "Update src/models/extraction_result.py to add ExtractionMode.ENSEMBLE = 'ensemble' to the enum.",
+    "Update src/agent/orchestrator.py to add 'ensemble' mode support. In _select_extractor, add ensemble mode that returns the EnsembleExtractor. This gives users a single mode that runs all free models together.",
+    "Update api/routes/extract.py to add POST /extract/ensemble endpoint for the full ensemble extraction mode.",
+    "Update config/settings.yaml to document the full ensemble configuration with all available models listed and their defaults.",
+    "Update README.md to document: (a) new extraction modes (local-llm, ensemble), (b) free model registry and available models, (c) how to set up Ollama/LM Studio for local LLM, (d) configuration options for ensemble, (e) new environment variables, (f) updated architecture diagram showing ensemble layer.",
+    "Write tests/test_ensemble_extractor.py - test the EnsembleExtractor with mocked OCR and NER ensembles. Test: (a) full pipeline with all engines mocked, (b) graceful degradation when some engines unavailable, (c) confidence-weighted merging produces correct results, (d) configuration controls which engines are used."
+  ],
+  "acceptance_criteria": [
+    "EnsembleExtractor combines OCR ensemble + NER ensemble + optional LayoutLM + optional local LLM",
+    "ExtractionMode.ENSEMBLE enum value exists",
+    "Orchestrator routes 'ensemble' mode to EnsembleExtractor",
+    "POST /extract/ensemble API endpoint works",
+    "README documents all new features, modes, and configuration",
+    "All new tests pass: python -m pytest tests/test_ensemble_extractor.py -v",
+    "Full test suite passes: python -m pytest tests/ -v"
+  ],
+  "verification": [
+    "python -m pytest tests/ -v",
+    "python -c \"from src.extractors.ensemble_extractor import EnsembleExtractor; print('OK')\"",
+    "python -c \"from src.models.extraction_result import ExtractionMode; assert 'ensemble' == ExtractionMode.ENSEMBLE.value; print('OK')\""
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

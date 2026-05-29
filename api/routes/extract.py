@@ -100,6 +100,19 @@ async def extract_hybrid(
     return await _extract_with_mode(file, "hybrid", document_type)
 
 
+@router.post("/local-llm")
+async def extract_local_llm(
+    file: UploadFile = File(...),
+    document_type: Optional[str] = Query(None, description="Document type hint"),
+):
+    """Extract entities using a local LLM via OpenAI-compatible endpoint.
+
+    Supports Ollama, LM Studio, LocalAI, vLLM, and any OpenAI-compatible service.
+    Configure the endpoint via LOCAL_LLM_BASE_URL and LOCAL_LLM_MODEL env vars.
+    """
+    return await _extract_with_mode(file, "local_llm", document_type)
+
+
 @router.post("/auto")
 async def extract_auto(
     file: UploadFile = File(...),

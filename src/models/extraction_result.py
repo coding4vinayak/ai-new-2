@@ -16,6 +16,7 @@ class ExtractionMode(str, Enum):
     LOCAL = "local"
     API = "api"
     HYBRID = "hybrid"
+    LOCAL_LLM = "local_llm"
 
 
 class ExtractionResult(BaseModel):

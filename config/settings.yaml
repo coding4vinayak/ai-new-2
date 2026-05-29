@@ -3,6 +3,7 @@ extraction:
     - local
     - api
     - hybrid
+    - local_llm
   default_mode: hybrid
   confidence_thresholds:
     hybrid_escalation: 0.7
@@ -26,6 +27,52 @@ api:
     timeout_seconds: 60
     max_retries: 3
     temperature: 0.0
+
+local_llm:
+  base_url: http://localhost:11434/v1
+  model_name: llama3
+  api_key: not-needed
+  provider: ollama
+  timeout_seconds: 120
+  max_retries: 3
+
+free_models:
+  ocr_engines:
+    - name: tesseract
+      enabled: true
+      config:
+        lang: eng
+    - name: doctr
+      enabled: false
+      config:
+        det_arch: db_resnet50
+        reco_arch: crnn_vgg16_bn
+    - name: paddleocr
+      enabled: false
+      config:
+        lang: en
+  ner_models:
+    - name: spacy_sm
+      enabled: true
+      config:
+        model: en_core_web_sm
+    - name: spacy_lg
+      enabled: false
+      config:
+        model: en_core_web_lg
+  layout_models:
+    - name: doctr_layout
+      enabled: false
+      config:
+        model: db_resnet50
+
+ensemble:
+  ocr_engines:
+    - tesseract
+  ner_models:
+    - spacy_sm
+  voting_strategy: confidence_weighted
+  confidence_threshold: 0.6
 
 supported_file_types:
   - pdf

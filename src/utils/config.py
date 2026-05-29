@@ -23,7 +23,7 @@ def _load_yaml_config(filename: str) -> Dict[str, Any]:
 class ExtractionSettings(BaseSettings):
     """Extraction-related settings."""
 
-    modes: List[str] = ["local", "api", "hybrid"]
+    modes: List[str] = ["local", "api", "hybrid", "local_llm"]
     default_mode: str = "hybrid"
     hybrid_escalation_threshold: float = 0.7
     minimum_acceptable_threshold: float = 0.5
@@ -47,6 +47,39 @@ class APIKeysSettings(BaseSettings):
 
     class Config:
         populate_by_name = True
+
+
+class LocalLLMSettings(BaseSettings):
+    """Local LLM endpoint settings for OpenAI-compatible providers."""
+
+    base_url: str = Field(
+        default="http://localhost:11434/v1", alias="LOCAL_LLM_BASE_URL"
+    )
+    model_name: str = Field(default="llama3", alias="LOCAL_LLM_MODEL")
+    api_key: str = Field(default="not-needed", alias="LOCAL_LLM_API_KEY")
+    provider: str = "ollama"
+    timeout_seconds: int = 120
+    max_retries: int = 3
+
+    class Config:
+        populate_by_name = True
+
+
+class FreeModelsSettings(BaseSettings):
+    """Settings for free/open-source model configurations."""
+
+    ocr_engines: List[Dict[str, Any]] = Field(default_factory=list)
+    ner_models: List[Dict[str, Any]] = Field(default_factory=list)
+    layout_models: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class EnsembleSettings(BaseSettings):
+    """Settings for ensemble/multi-model extraction strategies."""
+
+    ocr_engines: List[str] = Field(default_factory=lambda: ["tesseract"])
+    ner_models: List[str] = Field(default_factory=lambda: ["spacy_sm"])
+    voting_strategy: str = "confidence_weighted"
+    confidence_threshold: float = 0.6
 
 
 class WebhookSettings(BaseSettings):
@@ -80,10 +113,20 @@ class Settings(BaseSettings):
     database_url: str = Field(default="sqlite:///data/audit.db", alias="DATABASE_URL")
     webhook_secret: str = Field(default="", alias="WEBHOOK_SECRET")
 
+    # Local LLM settings from environment
+    local_llm_base_url: str = Field(
+        default="http://localhost:11434/v1", alias="LOCAL_LLM_BASE_URL"
+    )
+    local_llm_model: str = Field(default="llama3", alias="LOCAL_LLM_MODEL")
+    local_llm_api_key: str = Field(default="not-needed", alias="LOCAL_LLM_API_KEY")
+
     # Extraction settings (from YAML)
     extraction: Optional[Dict[str, Any]] = None
     batch_processing: Optional[Dict[str, Any]] = None
     api: Optional[Dict[str, Any]] = None
+    local_llm: Optional[Dict[str, Any]] = None
+    free_models: Optional[Dict[str, Any]] = None
+    ensemble: Optional[Dict[str, Any]] = None
     supported_file_types: List[str] = [
         "pdf", "png", "jpg", "jpeg", "tiff", "docx", "txt"
     ]
@@ -109,6 +152,12 @@ class Settings(BaseSettings):
                 self.batch_processing = yaml_config.get("batch_processing")
             if self.api is None:
                 self.api = yaml_config.get("api")
+            if self.local_llm is None:
+                self.local_llm = yaml_config.get("local_llm")
+            if self.free_models is None:
+                self.free_models = yaml_config.get("free_models")
+            if self.ensemble is None:
+                self.ensemble = yaml_config.get("ensemble")
             if "supported_file_types" in yaml_config:
                 self.supported_file_types = yaml_config["supported_file_types"]
             if self.logging_config is None:
@@ -136,6 +185,44 @@ class Settings(BaseSettings):
         if self.batch_processing:
             return self.batch_processing.get("max_batch_size", 100)
         return 100
+
+    def get_local_llm_settings(self) -> LocalLLMSettings:
+        """Get local LLM settings from YAML config and env vars.
+
+        Returns:
+            LocalLLMSettings instance with merged configuration.
+        """
+        local_llm_config = self.local_llm or {}
+        return LocalLLMSettings(
+            base_url=self.local_llm_base_url or local_llm_config.get(
+                "base_url", "http://localhost:11434/v1"
+            ),
+            model_name=self.local_llm_model or local_llm_config.get(
+                "model_name", "llama3"
+            ),
+            api_key=self.local_llm_api_key or local_llm_config.get(
+                "api_key", "not-needed"
+            ),
+            provider=local_llm_config.get("provider", "ollama"),
+            timeout_seconds=local_llm_config.get("timeout_seconds", 120),
+            max_retries=local_llm_config.get("max_retries", 3),
+        )
+
+    def get_ensemble_settings(self) -> EnsembleSettings:
+        """Get ensemble settings from YAML config.
+
+        Returns:
+            EnsembleSettings instance.
+        """
+        ensemble_config = self.ensemble or {}
+        return EnsembleSettings(
+            ocr_engines=ensemble_config.get("ocr_engines", ["tesseract"]),
+            ner_models=ensemble_config.get("ner_models", ["spacy_sm"]),
+            voting_strategy=ensemble_config.get(
+                "voting_strategy", "confidence_weighted"
+            ),
+            confidence_threshold=ensemble_config.get("confidence_threshold", 0.6),
+        )
 
 
 @lru_cache()

@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Enhanced OCR layer with TrOCR, PaddleOCR, DocTR support and OCR ensemble voting. Adds multiple free OCR engines with confidence-weighted result merging.",
+  "status": "pending",
+  "steps": [
+    "Create src/processors/ocr_engines/__init__.py - package init that exports all OCR engine classes.",
+    "Create src/processors/ocr_engines/base_ocr.py - BaseOCREngine abstract class with methods: extract_text(image_path) -> Tuple[str, float], is_available() -> bool, get_name() -> str. This is the interface all OCR engines implement.",
+    "Create src/processors/ocr_engines/tesseract_ocr.py - wrap the existing OCREngine (src/processors/ocr_engine.py) logic into the new BaseOCREngine interface. Keep all existing preprocessing logic. Mark as always available if pytesseract is importable.",
+    "Create src/processors/ocr_engines/trocr_engine.py - TrOCR (Microsoft transformer-based OCR) engine using transformers library. Use model 'microsoft/trocr-base-printed' for printed text and 'microsoft/trocr-base-handwritten' for handwriting. Implement is_available() to check if transformers and torch are importable. Process image by splitting into line segments and running TrOCR on each. Return concatenated text with confidence from model logits.",
+    "Create src/processors/ocr_engines/paddle_ocr_engine.py - PaddleOCR engine wrapper. Use PaddleOCR(use_angle_cls=True, lang='en') for English. Implement is_available() to check if paddleocr is importable. Extract text with bounding boxes and confidence scores. Support multi-language via lang parameter.",
+    "Create src/processors/ocr_engines/doctr_engine.py - DocTR (Mindee) engine wrapper. Use doctr.models.ocr_predictor(pretrained=True). Implement is_available() to check if doctr is importable. Process full document pages, return structured text with word-level confidences.",
+    "Create src/processors/ocr_ensemble.py - OCRensemble orchestrator. Takes a list of BaseOCREngine instances. For each image: (a) run all available engines, (b) collect results as (text, confidence) pairs, (c) implement confidence-weighted merging - if texts are similar (high overlap), pick the highest confidence one; if texts differ significantly, use character-level voting across engines. Configurable: which engines to include, minimum engines required, fallback strategy.",
+    "Update src/processors/ocr_engine.py - keep backward compatibility but add a factory function get_ocr_engine(engine_name) that returns the appropriate engine from the new package. Add get_ocr_ensemble(config) that returns a configured OCREnsemble.",
+    "Register all OCR engines in the FreeModelRegistry (src/models/model_registry.py) on import/initialization.",
+    "Write tests/test_ocr_engines.py - test each OCR engine class with mocked dependencies (mock transformers pipeline, mock paddleocr, mock doctr). Test: (a) is_available() returns False when deps missing, (b) extract_text returns proper tuple, (c) OCREnsemble merges results correctly, (d) ensemble handles engine failures gracefully."
+  ],
+  "acceptance_criteria": [
+    "BaseOCREngine interface is defined with extract_text() and is_available()",
+    "TrOCR, PaddleOCR, and DocTR engines implement BaseOCREngine",
+    "Each engine returns False from is_available() if its dependencies are not installed",
+    "OCREnsemble runs multiple engines and merges results with confidence weighting",
+    "Existing Tesseract OCR still works via the backward-compatible interface",
+    "OCR engines are registered in the FreeModelRegistry",
+    "All new tests pass: python -m pytest tests/test_ocr_engines.py -v",
+    "Existing tests still pass: python -m pytest tests/ -v"
+  ],
+  "verification": [
+    "python -m pytest tests/ -v",
+    "python -c \"from src.processors.ocr_engines import TesseractOCR, TrOCREngine, PaddleOCREngine, DocTREngine; print('OK')\"",
+    "python -c \"from src.processors.ocr_ensemble import OCREnsemble; print('OK')\""
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

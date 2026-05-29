@@ -1,0 +1,31 @@
+{
+  "project_type": "Python FastAPI document intelligence agent",
+  "language": "Python 3.11",
+  "build_system": "pip with requirements.txt, Docker multi-stage build",
+  "test_framework": "pytest with pytest-asyncio, uses mock spaCy models and mocked API calls",
+  "build_command": "pip install -r requirements.txt",
+  "test_command": "python -m pytest tests/ -v",
+  "verification_instructions": "1. Install deps with pip install -r requirements.txt. 2. Run python -m pytest tests/ -v. 3. Verify imports work with python -c 'from src.extractors.local_extractor import LocalExtractor'",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "pyenv shell 3.11.14 && pip install -r requirements.txt && python -m spacy download en_core_web_sm",
+  "environment_constraints": "OPEN_INTERNET network mode - full access. Python 3.11 via pyenv. No Docker daemon available for docker build validation. New heavy ML deps (torch, transformers, paddleocr) should be optional imports with graceful fallback.",
+  "contribution_requirements": "Tests use mocked models (no real GPU/model downloads needed in tests). All new models must have graceful degradation if not installed.",
+  "key_patterns": "BaseExtractor abstract class in src/extractors/base.py defines extract() and get_confidence() interface. LocalExtractor uses spaCy + regex. APIExtractor uses openai.AsyncOpenAI client with retry logic. Settings loaded from config/settings.yaml via pydantic-settings in src/utils/config.py. ConfidenceReport and ConfidenceScore models in src/models/confidence.py. Tests mock spaCy docs and API calls.",
+  "relevant_files": [
+    "src/extractors/base.py",
+    "src/extractors/local_extractor.py",
+    "src/extractors/api_extractor.py",
+    "src/extractors/hybrid_extractor.py",
+    "src/processors/ocr_engine.py",
+    "src/utils/config.py",
+    "src/models/confidence.py",
+    "src/models/extraction_result.py",
+    "src/models/document.py",
+    "src/agent/orchestrator.py",
+    "config/settings.yaml",
+    "requirements.txt",
+    "tests/test_local_extractor.py",
+    "tests/test_api_extractor.py"
+  ],
+  "directory_structure": "src/extractors/ - extraction mode implementations. src/processors/ - document format processors and OCR. src/models/ - pydantic data models. src/utils/ - config, audit, webhooks. src/agent/ - orchestrator and action engine. src/industry/ - domain-specific analyzers. api/ - FastAPI routes. config/ - YAML configs. tests/ - pytest test suite."
+}

@@ -1,0 +1,34 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Enhanced NER layer with HuggingFace transformer models, LayoutLM for layout-aware extraction, and NER ensemble with confidence-weighted merging. Integrates these into the local extractor as configurable options.",
+  "status": "pending",
+  "steps": [
+    "Create src/extractors/ner_engines/__init__.py - package init exporting all NER engine classes.",
+    "Create src/extractors/ner_engines/base_ner.py - BaseNEREngine abstract class with methods: extract_entities(text) -> Dict[str, List[Tuple[str, float]]] (entity_type -> list of (value, confidence)), is_available() -> bool, get_name() -> str. The return format maps entity types to lists of (extracted_value, confidence_score) tuples.",
+    "Create src/extractors/ner_engines/spacy_ner.py - wraps existing spaCy NER logic from local_extractor.py into BaseNEREngine interface. Maps spaCy labels (PERSON, ORG, DATE, MONEY, GPE) to standard entity types (person_names, organization_names, dates, monetary_amounts, locations). Confidence comes from spaCy's entity scores or defaults to 0.8.",
+    "Create src/extractors/ner_engines/huggingface_ner.py - HuggingFace transformer NER engine. Use transformers pipeline('ner') with configurable model (default: 'dslim/bert-base-NER'). Support any HuggingFace NER model. Map HF entity labels (B-PER, I-PER, B-ORG, etc.) to standard types. Use pipeline confidence scores. Implement is_available() checking transformers import. Add support for aggregation_strategy='simple' to merge sub-word tokens.",
+    "Create src/extractors/ner_engines/layoutlm_engine.py - LayoutLM/LayoutLMv3 engine for structure-aware extraction. Use 'microsoft/layoutlmv3-base' model. This engine requires both text AND bounding box positions. Implement methods: (a) extract_with_layout(text, bboxes) for when layout info is available, (b) extract_entities(text) as fallback without layout. Best for invoices, forms, key-value pairs. is_available() checks transformers and torch.",
+    "Create src/extractors/ner_ensemble.py - NERensemble orchestrator. Takes a list of BaseNEREngine instances. For each text: (a) run all available NER engines, (b) collect entity results, (c) implement confidence-weighted merging: for each entity type, collect all extracted values across engines, group similar values (fuzzy matching), compute weighted confidence for each group, return the highest-confidence unique values. Configurable: engines list, weights per engine, confidence threshold for inclusion.",
+    "Update src/extractors/local_extractor.py to support the new NER engines. Add optional parameter use_ensemble=False. When use_ensemble=True, use NERensemble instead of just spaCy. Keep existing behavior as default. The _extract_with_spacy method should use SpaCyNER engine from the new package. Add _extract_with_ensemble() method.",
+    "Register all NER engines and LayoutLM in the FreeModelRegistry.",
+    "Write tests/test_ner_engines.py - test each NER engine with mocked transformers pipelines. Test: (a) SpaCyNER produces correct output format, (b) HuggingFaceNER maps labels correctly, (c) LayoutLMEngine handles text-only fallback, (d) NERensemble merges results with confidence weighting, (e) ensemble handles unavailable engines gracefully, (f) is_available() returns False when deps missing."
+  ],
+  "acceptance_criteria": [
+    "BaseNEREngine interface defined with extract_entities() and is_available()",
+    "SpaCyNER, HuggingFaceNER, and LayoutLMEngine implement BaseNEREngine",
+    "NERensemble merges results from multiple engines with confidence-weighted voting",
+    "LocalExtractor supports use_ensemble parameter to enable NER ensemble",
+    "Existing LocalExtractor behavior unchanged when use_ensemble=False (default)",
+    "All engines registered in FreeModelRegistry",
+    "All new tests pass: python -m pytest tests/test_ner_engines.py -v",
+    "Existing tests still pass: python -m pytest tests/ -v"
+  ],
+  "verification": [
+    "python -m pytest tests/ -v",
+    "python -c \"from src.extractors.ner_engines import SpaCyNER, HuggingFaceNER, LayoutLMEngine; print('OK')\"",
+    "python -c \"from src.extractors.ner_ensemble import NERensemble; print('OK')\""
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

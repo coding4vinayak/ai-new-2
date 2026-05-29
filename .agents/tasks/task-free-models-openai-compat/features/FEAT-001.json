@@ -1,0 +1,34 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Add Free Model Registry and OpenAI-compatible local LLM integration. Creates the model registry system, adds Ollama/LM Studio/LocalAI support via the OpenAI-compatible API pattern, and updates config/settings to support local LLM endpoints.",
+  "status": "in_progress",
+  "steps": [
+    "Create src/models/model_registry.py - a central FreeModelRegistry class that tracks available models (OCR engines, NER models, LLM endpoints, layout models). Each model has: name, type (ocr/ner/llm/layout), status (available/unavailable/checking), health_check() method. The registry should be a singleton with methods: register_model(), get_available_models(type), check_health(model_name), get_model(name). Include graceful fallback logic - if a model is unavailable, log a warning and skip it.",
+    "Create src/extractors/openai_compat_extractor.py - a new extractor that uses ANY OpenAI-compatible endpoint. It should: (a) accept base_url, model_name, api_key (optional) as constructor params, (b) use the openai.AsyncOpenAI client with custom base_url parameter, (c) follow the same pattern as api_extractor.py (_build_prompt, _call_openai pattern) but pointing to the custom endpoint, (d) include specific support for Ollama (default base_url http://localhost:11434/v1), LM Studio (http://localhost:1234/v1), LocalAI (http://localhost:8080/v1), vLLM, text-generation-webui, (e) model selection (llama3, mistral, phi3, codellama, etc.), (f) health check method that pings the endpoint's /models or /v1/models list.",
+    "Update config/settings.yaml to add new sections: 'local_llm' with fields base_url, model_name, api_key, provider (ollama/lmstudio/localai/vllm/custom), timeout_seconds, max_retries. Add 'free_models' section listing enabled OCR engines, NER models, and layout models with their configs. Add 'ensemble' section with ocr_engines list, ner_models list, voting_strategy (majority/confidence_weighted), confidence_threshold.",
+    "Update src/utils/config.py - add LocalLLMSettings, FreeModelsSettings, EnsembleSettings classes. Add these to the main Settings class. Add env var support for LOCAL_LLM_BASE_URL, LOCAL_LLM_MODEL, LOCAL_LLM_API_KEY.",
+    "Update .env.example to include the new LOCAL_LLM_BASE_URL, LOCAL_LLM_MODEL, LOCAL_LLM_API_KEY variables with documentation comments.",
+    "Update src/agent/orchestrator.py to add a new extraction mode 'local_llm' that uses the OpenAICompatExtractor. Add it to _select_extractor method. The orchestrator should check the model registry health before using local LLM mode.",
+    "Update api/routes/extract.py to add a new POST /extract/local-llm endpoint that uses the local LLM extraction mode.",
+    "Update requirements.txt to add: transformers>=4.36.0, torch>=2.1.0 (cpu version note), paddleocr>=2.7.0, python-doctr[torch]>=0.7.0, paddlepaddle>=2.5.0, optimum>=1.14.0, onnxruntime>=1.16.0. These are the deps needed across all features. Mark them with comments grouping them.",
+    "Write tests/test_openai_compat_extractor.py - test the OpenAICompatExtractor with mocked httpx/openai calls. Test: (a) successful extraction with custom endpoint, (b) health check passes/fails, (c) fallback when endpoint is down, (d) different provider presets (ollama, lmstudio). Follow the same mock pattern as tests/test_api_extractor.py.",
+    "Write tests/test_model_registry.py - test the FreeModelRegistry: (a) register and retrieve models, (b) health check logic, (c) graceful fallback for unavailable models, (d) get_available_models filtering by type."
+  ],
+  "acceptance_criteria": [
+    "OpenAICompatExtractor can connect to any OpenAI-compatible endpoint by setting base_url and model_name",
+    "FreeModelRegistry singleton tracks model availability and provides health checks",
+    "config/settings.yaml has local_llm, free_models, and ensemble sections",
+    "Settings class loads the new config sections properly",
+    "New /extract/local-llm API endpoint exists and routes to the correct extractor",
+    "All new tests pass with python -m pytest tests/test_openai_compat_extractor.py tests/test_model_registry.py -v",
+    "Existing tests still pass (python -m pytest tests/ -v)"
+  ],
+  "verification": [
+    "python -m pytest tests/ -v",
+    "python -c \"from src.extractors.openai_compat_extractor import OpenAICompatExtractor; print('OK')\"",
+    "python -c \"from src.models.model_registry import FreeModelRegistry; print('OK')\""
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

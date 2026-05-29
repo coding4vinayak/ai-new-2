@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Enhanced OCR layer with TrOCR, PaddleOCR, DocTR support and OCR ensemble voting. Adds multiple free OCR engines with confidence-weighted result merging.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/processors/ocr_engines/__init__.py - package init that exports all OCR engine classes.",
     "Create src/processors/ocr_engines/base_ocr.py - BaseOCREngine abstract class with methods: extract_text(image_path) -> Tuple[str, float], is_available() -> bool, get_name() -> str. This is the interface all OCR engines implement.",
@@ -31,5 +31,5 @@
     "python -c \"from src.processors.ocr_ensemble import OCREnsemble; print('OK')\""
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 110 tests pass (65 existing + 45 new). PaddleOCR and DocTR are not installed in the environment so their module-level imports use try/except gracefully. Tests use create=True on @patch decorators for mocking module-level names that may not exist. The ensemble confidence-weighted merging works correctly with similarity threshold comparison. Pydantic deprecation warnings are pre-existing from FEAT-001."
 }

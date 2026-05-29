@@ -9,7 +9,6 @@ import pytest
 from src.extractors.openai_compat_extractor import (
     DEFAULT_MODELS,
     PROVIDER_DEFAULTS,
-    OpenAICompatExtractor,
 )
 from src.models.document import Document, FileType
 from src.models.extraction_result import ExtractionMode
@@ -32,23 +31,33 @@ def sample_document():
 @pytest.fixture
 def extractor():
     """Create an OpenAI-compatible extractor with test settings."""
-    return OpenAICompatExtractor(
-        base_url="http://localhost:11434/v1",
-        model_name="llama3",
-        api_key="not-needed",
-        provider="ollama",
-    )
+    with patch("openai.AsyncOpenAI") as mock_client_class:
+        mock_client_class.return_value = AsyncMock()
+        from src.extractors.openai_compat_extractor import OpenAICompatExtractor
+
+        ext = OpenAICompatExtractor(
+            base_url="http://localhost:11434/v1",
+            model_name="llama3",
+            api_key="not-needed",
+            provider="ollama",
+        )
+    return ext
 
 
 @pytest.fixture
 def lmstudio_extractor():
     """Create an extractor configured for LM Studio."""
-    return OpenAICompatExtractor(
-        base_url="http://localhost:1234/v1",
-        model_name="local-model",
-        api_key="not-needed",
-        provider="lmstudio",
-    )
+    with patch("openai.AsyncOpenAI") as mock_client_class:
+        mock_client_class.return_value = AsyncMock()
+        from src.extractors.openai_compat_extractor import OpenAICompatExtractor
+
+        ext = OpenAICompatExtractor(
+            base_url="http://localhost:1234/v1",
+            model_name="local-model",
+            api_key="not-needed",
+            provider="lmstudio",
+        )
+    return ext
 
 
 def test_extractor_initialization_ollama(extractor):
@@ -139,7 +148,7 @@ def test_confidence_report_building(extractor):
 
 
 @pytest.mark.asyncio
-async def test_extraction_with_mocked_openai(extractor, sample_document):
+async def test_extraction_with_mocked_openai(sample_document):
     """Test full extraction with mocked OpenAI-compatible API call."""
     mock_response = MagicMock()
     mock_response.choices = [MagicMock()]
@@ -154,6 +163,15 @@ async def test_extraction_with_mocked_openai(extractor, sample_document):
         mock_client = AsyncMock()
         mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
         mock_client_class.return_value = mock_client
+
+        from src.extractors.openai_compat_extractor import OpenAICompatExtractor
+
+        extractor = OpenAICompatExtractor(
+            base_url="http://localhost:11434/v1",
+            model_name="llama3",
+            api_key="not-needed",
+            provider="ollama",
+        )
 
         result = await extractor.extract(sample_document)
 
@@ -172,7 +190,7 @@ async def test_extraction_with_mocked_openai(extractor, sample_document):
 
 
 @pytest.mark.asyncio
-async def test_extraction_endpoint_failure(extractor, sample_document):
+async def test_extraction_endpoint_failure(sample_document):
     """Test graceful handling when the endpoint is down."""
     with patch("openai.AsyncOpenAI") as mock_client_class:
         mock_client = AsyncMock()
@@ -180,6 +198,15 @@ async def test_extraction_endpoint_failure(extractor, sample_document):
             side_effect=Exception("Connection refused")
         )
         mock_client_class.return_value = mock_client
+
+        from src.extractors.openai_compat_extractor import OpenAICompatExtractor
+
+        extractor = OpenAICompatExtractor(
+            base_url="http://localhost:11434/v1",
+            model_name="llama3",
+            api_key="not-needed",
+            provider="ollama",
+        )
 
         result = await extractor.extract(sample_document)
 
@@ -194,11 +221,15 @@ async def test_extraction_endpoint_failure(extractor, sample_document):
 @pytest.mark.asyncio
 async def test_health_check_passes():
     """Test health check when endpoint is available."""
-    extractor = OpenAICompatExtractor(
-        base_url="http://localhost:11434/v1",
-        model_name="llama3",
-        provider="ollama",
-    )
+    with patch("openai.AsyncOpenAI") as mock_openai:
+        mock_openai.return_value = AsyncMock()
+        from src.extractors.openai_compat_extractor import OpenAICompatExtractor
+
+        extractor = OpenAICompatExtractor(
+            base_url="http://localhost:11434/v1",
+            model_name="llama3",
+            provider="ollama",
+        )
 
     with patch("httpx.AsyncClient") as mock_client_class:
         mock_client = AsyncMock()
@@ -216,11 +247,15 @@ async def test_health_check_passes():
 @pytest.mark.asyncio
 async def test_health_check_fails():
     """Test health check when endpoint is not available."""
-    extractor = OpenAICompatExtractor(
-        base_url="http://localhost:11434/v1",
-        model_name="llama3",
-        provider="ollama",
-    )
+    with patch("openai.AsyncOpenAI") as mock_openai:
+        mock_openai.return_value = AsyncMock()
+        from src.extractors.openai_compat_extractor import OpenAICompatExtractor
+
+        extractor = OpenAICompatExtractor(
+            base_url="http://localhost:11434/v1",
+            model_name="llama3",
+            provider="ollama",
+        )
 
     with patch("httpx.AsyncClient") as mock_client_class:
         mock_client = AsyncMock()
@@ -234,8 +269,8 @@ async def test_health_check_fails():
 
 
 @pytest.mark.asyncio
-async def test_extraction_retries_on_failure(extractor, sample_document):
-    """Test that extraction retries on transient failures."""
+async def test_extraction_retries_on_failure(sample_document):
+    """Test that extraction retries on transient failures with backoff."""
     mock_response = MagicMock()
     mock_response.choices = [MagicMock()]
     mock_response.choices[0].message.content = json.dumps({"vendor": "Acme"})
@@ -254,7 +289,21 @@ async def test_extraction_retries_on_failure(extractor, sample_document):
         mock_client.chat.completions.create = mock_create
         mock_client_class.return_value = mock_client
 
-        result = await extractor.extract(sample_document)
+        from src.extractors.openai_compat_extractor import OpenAICompatExtractor
 
-        assert result.entities["vendor"] == "Acme"
-        assert call_count == 3  # Failed twice, succeeded on third
+        extractor = OpenAICompatExtractor(
+            base_url="http://localhost:11434/v1",
+            model_name="llama3",
+            api_key="not-needed",
+            provider="ollama",
+        )
+
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+            result = await extractor.extract(sample_document)
+
+            assert result.entities["vendor"] == "Acme"
+            assert call_count == 3  # Failed twice, succeeded on third
+            # Verify backoff sleep was called
+            assert mock_sleep.call_count == 2
+            mock_sleep.assert_any_call(1)  # 2^0 = 1
+            mock_sleep.assert_any_call(2)  # 2^1 = 2

@@ -329,7 +329,9 @@ class EnsembleExtractor(BaseExtractor):
             text: Text to extract entities from.
 
         Returns:
-            Dictionary of extracted entities.
+            Dictionary of extracted entities with confidence scores.
+            Values are tuples of (value, confidence) for single values,
+            or lists of (value, confidence) tuples for multiple values.
         """
         if self._ner_ensemble is None:
             return {}
@@ -341,13 +343,13 @@ class EnsembleExtractor(BaseExtractor):
             # NER ensemble returns Dict[str, List[Tuple[str, float]]]
             raw_entities = self._ner_ensemble.extract_entities(text)
 
-            # Convert to flat entity format
+            # Convert to entity format preserving confidence
             entities: Dict[str, Any] = {}
             for entity_type, values in raw_entities.items():
                 if len(values) == 1:
-                    entities[entity_type] = values[0][0]
+                    entities[entity_type] = {"value": values[0][0], "confidence": values[0][1]}
                 else:
-                    entities[entity_type] = [v for v, _ in values]
+                    entities[entity_type] = {"value": [v for v, _ in values], "confidence": sum(c for _, c in values) / len(values)}
 
             return entities
         except Exception as e:
@@ -361,7 +363,7 @@ class EnsembleExtractor(BaseExtractor):
             text: Text to process.
 
         Returns:
-            Dictionary of extracted entities.
+            Dictionary of extracted entities with confidence scores.
         """
         if self._layoutlm_engine is None:
             return {}
@@ -375,13 +377,13 @@ class EnsembleExtractor(BaseExtractor):
 
             raw_entities = self._layoutlm_engine.extract_entities(text)
 
-            # Convert to flat entity format
+            # Convert to entity format preserving confidence
             entities: Dict[str, Any] = {}
             for entity_type, values in raw_entities.items():
                 if len(values) == 1:
-                    entities[entity_type] = values[0][0]
+                    entities[entity_type] = {"value": values[0][0], "confidence": values[0][1]}
                 else:
-                    entities[entity_type] = [v for v, _ in values]
+                    entities[entity_type] = {"value": [v for v, _ in values], "confidence": sum(c for _, c in values) / len(values)}
 
             return entities
         except Exception as e:
@@ -395,14 +397,21 @@ class EnsembleExtractor(BaseExtractor):
             document: The document to extract from.
 
         Returns:
-            Dictionary of extracted entities.
+            Dictionary of extracted entities with confidence scores.
         """
         if self._local_llm_extractor is None:
             return {}
 
         try:
             result = await self._local_llm_extractor.extract(document)
-            return result.entities
+            # Wrap LLM entities with confidence from the confidence report
+            entities: Dict[str, Any] = {}
+            for field, value in result.entities.items():
+                score = 0.75  # Default LLM confidence
+                if field in result.confidence_report.scores:
+                    score = result.confidence_report.scores[field].score
+                entities[field] = {"value": value, "confidence": score}
+            return entities
         except Exception as e:
             logger.warning(f"Local LLM extraction failed: {e}")
             return {}
@@ -411,36 +420,51 @@ class EnsembleExtractor(BaseExtractor):
         self,
         all_entities: List[Tuple[Dict[str, Any], float, str]],
     ) -> Dict[str, Any]:
-        """Merge results from all engines with confidence-weighted scoring.
+        """Merge results from all engines using actual per-value confidence.
 
-        For each field, picks the value from the source with highest weight.
-        If multiple sources agree on a value, confidence is boosted.
+        For each field, extracts the per-value confidence score (if available)
+        and combines it with the source weight to determine the best value.
+        This ensures a high-confidence NER result can override a low-confidence
+        LayoutLM result even though LayoutLM has a higher static weight.
 
         Args:
             all_entities: List of (entities_dict, weight, source_name) tuples.
+                Entity values may be dicts with 'value' and 'confidence' keys,
+                or plain values (from legacy sources).
 
         Returns:
-            Merged entity dictionary.
+            Merged entity dictionary with plain values (confidence stripped).
         """
         if not all_entities:
             return {}
 
-        # Collect all values per field with their weights
+        # Collect all values per field with their effective confidence
         field_values: Dict[str, List[Tuple[Any, float, str]]] = {}
 
-        for entities, weight, source in all_entities:
-            for field, value in entities.items():
+        for entities, static_weight, source in all_entities:
+            for field, raw_value in entities.items():
                 if field not in field_values:
                     field_values[field] = []
-                field_values[field].append((value, weight, source))
 
-        # For each field, select the best value
+                # Extract value and confidence if wrapped
+                if isinstance(raw_value, dict) and "value" in raw_value and "confidence" in raw_value:
+                    value = raw_value["value"]
+                    # Combine per-value confidence with static weight
+                    actual_confidence = raw_value["confidence"]
+                    effective_score = actual_confidence * static_weight
+                else:
+                    value = raw_value
+                    effective_score = static_weight
+
+                field_values[field].append((value, effective_score, source))
+
+        # For each field, select the best value by effective score
         merged: Dict[str, Any] = {}
         for field, values in field_values.items():
             if len(values) == 1:
                 merged[field] = values[0][0]
             else:
-                # Pick value from highest-weight source
+                # Pick value from highest effective score source
                 best = max(values, key=lambda x: x[1])
                 merged[field] = best[0]
 

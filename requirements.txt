@@ -21,13 +21,6 @@ pytest>=7.4.0
 pytest-asyncio>=0.21.0
 pytest-cov>=4.1.0
 
-# Free model dependencies (optional - install as needed)
-# Deep learning and transformers
-transformers>=4.36.0
-torch>=2.1.0
-optimum>=1.14.0
-onnxruntime>=1.16.0
-# OCR engines
-paddleocr>=2.7.0
-paddlepaddle>=2.5.0
-python-doctr[torch]>=0.7.0
+# For heavy ML model dependencies (torch, transformers, paddleocr, etc.),
+# see requirements-ml.txt. Those are optional and only needed when using
+# the TrOCR, PaddleOCR, DocTR, HuggingFace NER, or LayoutLM engines.

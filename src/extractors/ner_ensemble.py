@@ -1,6 +1,7 @@
 """NER ensemble orchestrator with confidence-weighted merging."""
 
 import logging
+from difflib import SequenceMatcher
 from typing import Dict, List, Optional, Tuple
 
 from src.extractors.ner_engines.base_ner import BaseNEREngine
@@ -179,7 +180,8 @@ class NERensemble:
     def _is_similar(self, a: str, b: str) -> bool:
         """Check if two entity strings are similar enough to be grouped.
 
-        Uses case-insensitive containment and simple character overlap.
+        Uses case-insensitive containment and SequenceMatcher ratio for
+        sequence-aware similarity comparison.
 
         Args:
             a: First string.
@@ -199,14 +201,7 @@ class NERensemble:
         if a_lower in b_lower or b_lower in a_lower:
             return True
 
-        # Character-level overlap (Jaccard similarity)
-        set_a = set(a_lower)
-        set_b = set(b_lower)
-        if not set_a or not set_b:
-            return False
-
-        intersection = len(set_a & set_b)
-        union = len(set_a | set_b)
-        similarity = intersection / union
+        # Sequence-aware similarity (SequenceMatcher ratio)
+        similarity = SequenceMatcher(None, a_lower, b_lower).ratio()
 
         return similarity > 0.8

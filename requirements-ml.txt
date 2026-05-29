@@ -1,0 +1,24 @@
+# Heavy ML dependencies for optional model engines.
+# Install with: pip install -r requirements-ml.txt
+#
+# These are only needed when using the following engines:
+# - TrOCR OCR engine (transformers, torch)
+# - HuggingFace NER engine (transformers, torch)
+# - LayoutLMv3 engine (transformers, torch)
+# - PaddleOCR engine (paddleocr, paddlepaddle)
+# - DocTR engine (python-doctr[torch])
+# - ONNX optimization (optimum, onnxruntime)
+#
+# All these engines use try/except imports and degrade gracefully
+# if dependencies are not installed.
+
+# Deep learning and transformers
+transformers>=4.36.0
+torch>=2.1.0
+optimum>=1.14.0
+onnxruntime>=1.16.0
+
+# OCR engines
+paddleocr>=2.7.0
+paddlepaddle>=2.5.0
+python-doctr[torch]>=0.7.0

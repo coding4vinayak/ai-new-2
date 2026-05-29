@@ -1,5 +1,6 @@
 """OpenAI-compatible extractor for local LLM endpoints (Ollama, LM Studio, etc.)."""
 
+import asyncio
 import json
 import logging
 import time
@@ -97,6 +98,15 @@ class OpenAICompatExtractor(BaseExtractor):
         self._timeout_seconds = timeout_seconds
         self._max_retries = max_retries
         self._entity_config = _load_entity_config()
+
+        # Create a single AsyncOpenAI client instance for connection reuse
+        import openai
+
+        self._client = openai.AsyncOpenAI(
+            base_url=self._base_url,
+            api_key=self._api_key,
+            timeout=self._timeout_seconds,
+        )
 
     def _resolve_provider(self, settings) -> str:
         """Resolve provider from settings."""
@@ -270,14 +280,6 @@ Only return the JSON object, no additional text or explanation."""
         Raises:
             Exception: If the API call fails after all retries.
         """
-        import openai
-
-        client = openai.AsyncOpenAI(
-            base_url=self._base_url,
-            api_key=self._api_key,
-            timeout=self._timeout_seconds,
-        )
-
         # Truncate text if too long
         max_chars = self.MAX_TOKENS * self.CHARS_PER_TOKEN
         if len(text) > max_chars:
@@ -286,7 +288,7 @@ Only return the JSON object, no additional text or explanation."""
         last_error = None
         for attempt in range(self._max_retries):
             try:
-                response = await client.chat.completions.create(
+                response = await self._client.chat.completions.create(
                     model=self._model_name,
                     messages=[
                         {"role": "system", "content": prompt},
@@ -302,6 +304,7 @@ Only return the JSON object, no additional text or explanation."""
                     f"Attempt {attempt + 1}/{self._max_retries} failed: {e}"
                 )
                 if attempt < self._max_retries - 1:
+                    await asyncio.sleep(2 ** attempt)
                     continue
 
         raise last_error  # type: ignore[misc]

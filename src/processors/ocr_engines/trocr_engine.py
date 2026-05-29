@@ -127,7 +127,14 @@ class TrOCREngine(BaseOCREngine):
     def _split_into_lines(self, image) -> list:
         """Split an image into horizontal line segments.
 
-        Uses a simple projection-based approach to detect line boundaries.
+        Uses a simple projection-based approach to detect line boundaries
+        by summing dark pixels per row across the full image width.
+
+        Known limitation: This approach assumes single-column layout. For
+        multi-column documents, the horizontal projection merges columns
+        into single "lines", producing incorrect segmentation. Multi-column
+        support would require vertical gap detection or connected-component
+        analysis before line splitting.
 
         Args:
             image: PIL Image to split.

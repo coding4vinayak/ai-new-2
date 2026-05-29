@@ -45,6 +45,11 @@ class FreeModelRegistry:
 
     Tracks OCR engines, NER models, LLM endpoints, and layout models.
     Provides health checking and graceful fallback when models are unavailable.
+
+    NOTE: This registry is currently informational and used for health-check UI
+    purposes. The EnsembleExtractor builds engines directly based on configuration
+    rather than consulting the registry for engine selection. Integration into the
+    engine selection pipeline is planned for a future iteration.
     """
 
     _instance: Optional["FreeModelRegistry"] = None

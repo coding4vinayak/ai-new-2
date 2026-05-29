@@ -92,12 +92,19 @@ class LayoutLMEngine(BaseNEREngine):
     ) -> Dict[str, List[Tuple[str, float]]]:
         """Extract entities using both text and bounding box positions.
 
-        This is the preferred method when layout information (from OCR) is available.
-        Best for invoices, forms, and structured documents.
+        NOTE: The current implementation is text-only. Bounding box data is
+        accepted for interface compatibility but is not passed to the model.
+        Full layout-aware extraction requires a LayoutLMv3 model fine-tuned
+        with a LayoutLMv3FeatureExtractor that accepts both tokens and
+        normalized bounding boxes. This will be addressed in a future iteration.
+
+        TODO: Integrate bounding boxes via LayoutLMv3FeatureExtractor to enable
+        true layout-aware token classification.
 
         Args:
             text: Text to process.
             bboxes: List of bounding boxes [x0, y0, x1, y1] for each token.
+                Currently unused - see note above.
 
         Returns:
             Dictionary mapping entity types to lists of (value, confidence) tuples.

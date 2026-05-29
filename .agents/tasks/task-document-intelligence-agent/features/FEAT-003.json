@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Industry features (contract analysis, invoice processing, compliance checking, PII detection, document classification, version comparison) and batch processing with progress tracking. These are the enterprise-grade capabilities.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create src/industry/document_classifier.py with DocumentClassifier class: Auto-classifies documents into types (CONTRACT, INVOICE, LEGAL, FINANCIAL, HR, MEDICAL, GENERAL). Methods: classify(text) -> (doc_type, confidence) uses keyword scoring and structural analysis, _keyword_scores(text) checks for type-indicative keywords (e.g., 'whereas', 'hereby' for contracts; 'invoice', 'total due' for invoices), _structural_analysis(text) checks formatting patterns (tables for invoices, numbered clauses for contracts). Returns top classification with confidence",
     "Create src/industry/contract_analyzer.py with ContractAnalyzer class: Deep contract analysis. Methods: analyze(extraction_result) -> ContractAnalysis model, extract_clauses(text) identifies and categorizes clauses (termination, indemnity, confidentiality, force_majeure, limitation_of_liability, governing_law, payment, IP_rights), extract_obligations(text) -> List[Obligation] with party, description, deadline, track_expiry_dates(result) identifies key dates and computes days-until-expiry, calculate_risk_score(clauses, obligations) -> float scoring based on missing standard clauses, one-sided terms, unusual provisions. ContractAnalysis model includes: clauses, obligations, key_dates, risk_score, risk_factors, recommendations",

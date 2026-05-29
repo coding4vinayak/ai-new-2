@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Core extraction engine implementing all three extraction modes (Local, API, Hybrid) with confidence scoring, plus the agent orchestrator and action engine. This is the brain of the system.",
-  "status": "pending",
+  "status": "completed",
   "steps": [
     "Create src/extractors/local_extractor.py with LocalExtractor(BaseExtractor): Uses spaCy NER + regex patterns + pytesseract OCR. Methods: extract(document) processes text through spaCy pipeline for named entities (PERSON, ORG, DATE, MONEY, GPE), applies regex patterns from config/entities.yaml for structured fields (dates, amounts, invoice numbers), computes per-field confidence based on NER confidence scores and regex match quality. Include _extract_with_spacy(text), _extract_with_regex(text, entity_config), _compute_confidence(entities) methods",
     "Create src/extractors/api_extractor.py with APIExtractor(BaseExtractor): Integrates with OpenAI GPT-4 and Anthropic Claude. Methods: extract(document) sends document text with structured extraction prompt, _build_prompt(document, entity_config) constructs extraction prompt with entity definitions from config, _call_openai(prompt, text) using openai async client, _call_anthropic(prompt, text) using anthropic async client, _parse_response(raw_response) extracts structured JSON from LLM response. Include retry logic, token limit handling (chunking for long documents), and provider fallback (try OpenAI first, fall back to Claude)",
@@ -27,5 +27,5 @@
     "Run: cd /projects/sandbox/ai-new-2 && python -c \"from src.agent.action_engine import ActionEngine; print('ActionEngine OK')\""
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "spaCy en_core_web_sm model needed to be downloaded separately (python -m spacy download en_core_web_sm). All five modules import cleanly. LocalExtractor successfully extracts PERSON, ORG, DATE, MONEY, GPE entities via spaCy and dates/money/invoices/emails/phones via regex. APIExtractor handles prompt construction and response parsing including markdown-wrapped JSON. HybridExtractor correctly falls back to local-only when API keys are not set. ActionEngine evaluates gt/lt/eq/contains/exists conditions and compound AND/OR. The orchestrator coordinates the full pipeline and handles text files natively."
 }
